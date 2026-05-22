@@ -3,5 +3,9 @@
 version = 4
 
 [[package]]
-name = "modrad"
+name = "modrad-radius"
+version = "0.1.0"
+
+[[package]]
+name = "modrad-server"
 version = "0.1.0"
