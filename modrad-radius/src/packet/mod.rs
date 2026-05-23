@@ -86,10 +86,10 @@ impl From<RadiusPacket> for Vec<u8> {
     }
 }
 
-impl TryFrom<Vec<u8>> for RadiusPacket {
+impl TryFrom<&[u8]> for RadiusPacket {
     type Error = RadiusPacketError;
 
-    fn try_from(buffer: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(buffer: &[u8]) -> Result<Self, Self::Error> {
         if buffer.len() < RADIUS_PACKET_HEADER_SIZE {
             return Err(RadiusPacketError::NotEnoughData);
         }
@@ -246,7 +246,7 @@ mod tests {
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, // Authenticator
         ];
 
-        let result = RadiusPacket::try_from(buffer).unwrap();
+        let result = RadiusPacket::try_from(&buffer[..]).unwrap();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
         assert_that!(result.identifier(), eq(1));
@@ -270,7 +270,7 @@ mod tests {
             2,  // Length
         ];
 
-        let result = RadiusPacket::try_from(buffer).unwrap();
+        let result = RadiusPacket::try_from(&buffer[..]).unwrap();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
         assert_that!(result.identifier(), eq(1));
@@ -304,7 +304,7 @@ mod tests {
             b'w', b'o', b'r', b'l', b'd', // Value
         ];
 
-        let result = RadiusPacket::try_from(buffer).unwrap();
+        let result = RadiusPacket::try_from(&buffer[..]).unwrap();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
         assert_that!(result.identifier(), eq(1));
@@ -339,7 +339,7 @@ mod tests {
             1, 2, // Extra data
         ];
 
-        let result = RadiusPacket::try_from(buffer).unwrap_err();
+        let result = RadiusPacket::try_from(&buffer[..]).unwrap_err();
 
         assert_that!(result, matches_pattern!(RadiusPacketError::TooMuchData));
     }
@@ -354,7 +354,7 @@ mod tests {
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, // Authenticator
         ];
 
-        let result = RadiusPacket::try_from(buffer).unwrap_err();
+        let result = RadiusPacket::try_from(&buffer[..]).unwrap_err();
 
         assert_that!(result, matches_pattern!(RadiusPacketError::NotEnoughData));
     }
