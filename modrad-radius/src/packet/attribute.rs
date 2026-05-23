@@ -50,5 +50,8 @@ define_byte_enum!(
         NASPortType = 61,
         PortLimit = 62,
         LoginLATPort = 63,
+        // 64 - 78
+        EAPMessage = 79,
+        MessageAuthenticator = 80,
     }
 );
