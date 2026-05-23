@@ -22,7 +22,6 @@ pub struct RadiusPacket {
     attributes: Vec<RadiusPacketAttribute>,
 }
 
-
 impl RadiusPacket {
     pub fn code(&self) -> RadiusPacketCode {
         self.code
