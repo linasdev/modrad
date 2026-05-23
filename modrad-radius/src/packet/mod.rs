@@ -1,4 +1,9 @@
-use crate::tag_length_value::{TagLengthValue, TagLengthValueError};
+use crate::packet::attribute::RadiusPacketAttribute;
+use crate::packet::code::RadiusPacketCode;
+use crate::tag_length_value::TagLengthValueError;
+
+pub mod attribute;
+pub mod code;
 
 const RADIUS_PACKET_HEADER_SIZE: usize = 20;
 
@@ -9,17 +14,6 @@ pub enum RadiusPacketError {
     TagLengthValue(TagLengthValueError),
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum RadiusPacketCode {
-    AccessRequest,
-    AccessAccept,
-    AccessReject,
-    AccountingRequest,
-    AccountingResponse,
-    AccessChallenge,
-    Other(u8),
-}
-
 pub struct RadiusPacket {
     code: RadiusPacketCode,
     identifier: u8,
@@ -28,45 +22,6 @@ pub struct RadiusPacket {
     attributes: Vec<RadiusPacketAttribute>,
 }
 
-impl From<TagLengthValueError> for RadiusPacketError {
-    fn from(error: TagLengthValueError) -> Self {
-        RadiusPacketError::TagLengthValue(error)
-    }
-}
-
-impl From<u8> for RadiusPacketCode {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => RadiusPacketCode::AccessRequest,
-            2 => RadiusPacketCode::AccessAccept,
-            3 => RadiusPacketCode::AccessReject,
-            4 => RadiusPacketCode::AccountingRequest,
-            5 => RadiusPacketCode::AccountingResponse,
-            11 => RadiusPacketCode::AccessChallenge,
-            _ => RadiusPacketCode::Other(value),
-        }
-    }
-}
-
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum RadiusPacketAttributeType {
-    UserName,
-    UserPassword,
-    Other(u8),
-}
-
-pub type RadiusPacketAttribute = TagLengthValue<RadiusPacketAttributeType>;
-
-impl From<u8> for RadiusPacketAttributeType {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => RadiusPacketAttributeType::UserName,
-            2 => RadiusPacketAttributeType::UserPassword,
-            _ => RadiusPacketAttributeType::Other(value),
-        }
-    }
-}
 
 impl RadiusPacket {
     pub fn code(&self) -> RadiusPacketCode {
@@ -81,7 +36,7 @@ impl RadiusPacket {
         self.length
     }
 
-    pub fn authenticator(&self) -> &[u8] {
+    pub fn authenticator(&self) -> &[u8; 16] {
         &self.authenticator
     }
 
@@ -101,10 +56,7 @@ impl TryFrom<Vec<u8>> for RadiusPacket {
         let code = RadiusPacketCode::from(packet_data[0]);
         let identifier = packet_data[1];
 
-        let length = u16::from_be_bytes([
-            packet_data[2],
-            packet_data[3],
-        ]) as usize;
+        let length = u16::from_be_bytes([packet_data[2], packet_data[3]]) as usize;
 
         if packet_data.len() < length {
             return Err(RadiusPacketError::NotEnoughData);
@@ -114,7 +66,9 @@ impl TryFrom<Vec<u8>> for RadiusPacket {
             return Err(RadiusPacketError::TooMuchData);
         }
 
-        let authenticator: [u8; 16] = packet_data[4..20].try_into().unwrap();
+        let authenticator: [u8; 16] = packet_data[4..RADIUS_PACKET_HEADER_SIZE]
+            .try_into()
+            .unwrap();
 
         let mut offset = RADIUS_PACKET_HEADER_SIZE;
         let mut attributes = Vec::new();
@@ -131,5 +85,11 @@ impl TryFrom<Vec<u8>> for RadiusPacket {
             authenticator,
             attributes,
         })
+    }
+}
+
+impl From<TagLengthValueError> for RadiusPacketError {
+    fn from(error: TagLengthValueError) -> Self {
+        RadiusPacketError::TagLengthValue(error)
     }
 }

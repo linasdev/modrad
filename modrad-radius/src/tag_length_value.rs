@@ -6,13 +6,19 @@ pub enum TagLengthValueError {
     InvalidLength(usize),
 }
 
-pub struct TagLengthValue<T> where T: From<u8> + Copy {
+pub struct TagLengthValue<T>
+where
+    T: From<u8> + Copy,
+{
     tag: T,
     length: usize,
     value: Vec<u8>,
 }
 
-impl<T> TagLengthValue<T> where T: From<u8> + Copy {
+impl<T> TagLengthValue<T>
+where
+    T: From<u8> + Copy,
+{
     pub fn tag(&self) -> T {
         self.tag
     }
@@ -26,7 +32,10 @@ impl<T> TagLengthValue<T> where T: From<u8> + Copy {
     }
 }
 
-impl<T> TryFrom<&[u8]> for TagLengthValue<T> where T: From<u8> + Copy {
+impl<T> TryFrom<&[u8]> for TagLengthValue<T>
+where
+    T: From<u8> + Copy,
+{
     type Error = TagLengthValueError;
 
     fn try_from(packet_data: &[u8]) -> Result<Self, Self::Error> {
@@ -47,10 +56,6 @@ impl<T> TryFrom<&[u8]> for TagLengthValue<T> where T: From<u8> + Copy {
 
         let value = packet_data[TAG_LENGTH_VALUE_HEADER_SIZE..length].to_vec();
 
-        Ok(Self {
-            tag,
-            length,
-            value,
-        })
+        Ok(Self { tag, length, value })
     }
 }
