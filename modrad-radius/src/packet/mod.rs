@@ -17,7 +17,6 @@ pub enum RadiusPacketError {
 pub struct RadiusPacket {
     code: RadiusPacketCode,
     identifier: u8,
-    length: usize,
     authenticator: [u8; 16],
     attributes: Vec<RadiusPacketAttribute>,
 }
@@ -32,7 +31,12 @@ impl RadiusPacket {
     }
 
     pub fn length(&self) -> usize {
-        self.length
+        RADIUS_PACKET_HEADER_SIZE
+            + self
+                .attributes
+                .iter()
+                .map(RadiusPacketAttribute::length)
+                .sum::<usize>()
     }
 
     pub fn authenticator(&self) -> &[u8; 16] {
@@ -44,35 +48,56 @@ impl RadiusPacket {
     }
 }
 
+impl From<RadiusPacket> for Vec<u8> {
+    fn from(packet: RadiusPacket) -> Self {
+        let mut buffer = Vec::with_capacity(packet.length());
+
+        buffer.push(packet.code.into()); // byte 0
+        buffer.push(packet.identifier); // byte 1
+
+        for byte in u16::to_be_bytes(packet.length() as u16) {
+            buffer.push(byte); // bytes 2 & 3
+        }
+
+        for byte in packet.authenticator.into_iter() {
+            buffer.push(byte); // bytes 4 - 19
+        }
+
+        for attribute in packet.attributes.into_iter() {
+            buffer.extend_from_slice(&Vec::from(attribute)); // bytes 20 - length
+        }
+
+        buffer
+    }
+}
+
 impl TryFrom<Vec<u8>> for RadiusPacket {
     type Error = RadiusPacketError;
 
-    fn try_from(packet_data: Vec<u8>) -> Result<Self, Self::Error> {
-        if packet_data.len() < RADIUS_PACKET_HEADER_SIZE {
+    fn try_from(buffer: Vec<u8>) -> Result<Self, Self::Error> {
+        if buffer.len() < RADIUS_PACKET_HEADER_SIZE {
             return Err(RadiusPacketError::NotEnoughData);
         }
 
-        let code = RadiusPacketCode::from(packet_data[0]);
-        let identifier = packet_data[1];
+        let code = RadiusPacketCode::from(buffer[0]);
+        let identifier = buffer[1];
 
-        let length = u16::from_be_bytes([packet_data[2], packet_data[3]]) as usize;
+        let length = u16::from_be_bytes([buffer[2], buffer[3]]) as usize;
 
-        if packet_data.len() < length {
+        if buffer.len() < length {
             return Err(RadiusPacketError::NotEnoughData);
         }
 
-        if packet_data.len() > length {
+        if buffer.len() > length {
             return Err(RadiusPacketError::TooMuchData);
         }
 
-        let authenticator: [u8; 16] = packet_data[4..RADIUS_PACKET_HEADER_SIZE]
-            .try_into()
-            .unwrap();
+        let authenticator: [u8; 16] = buffer[4..RADIUS_PACKET_HEADER_SIZE].try_into().unwrap();
 
         let mut offset = RADIUS_PACKET_HEADER_SIZE;
-        let mut attributes = Vec::new();
+        let mut attributes = vec![];
         while offset < length {
-            let attribute = RadiusPacketAttribute::try_from(&packet_data[offset..])?;
+            let attribute = RadiusPacketAttribute::try_from(&buffer[offset..])?;
             offset += attribute.length();
             attributes.push(attribute);
         }
@@ -80,7 +105,6 @@ impl TryFrom<Vec<u8>> for RadiusPacket {
         Ok(Self {
             code,
             identifier,
-            length,
             authenticator,
             attributes,
         })

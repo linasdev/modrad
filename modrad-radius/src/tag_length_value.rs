@@ -8,23 +8,22 @@ pub enum TagLengthValueError {
 
 pub struct TagLengthValue<T>
 where
-    T: From<u8> + Copy,
+    T: From<u8> + Into<u8> + Copy,
 {
     tag: T,
-    length: usize,
     value: Vec<u8>,
 }
 
 impl<T> TagLengthValue<T>
 where
-    T: From<u8> + Copy,
+    T: From<u8> + Into<u8> + Copy,
 {
     pub fn tag(&self) -> T {
         self.tag
     }
 
     pub fn length(&self) -> usize {
-        self.length
+        TAG_LENGTH_VALUE_HEADER_SIZE + self.value.len()
     }
 
     pub fn value(&self) -> &[u8] {
@@ -32,21 +31,35 @@ where
     }
 }
 
+impl<T> From<TagLengthValue<T>> for Vec<u8>
+where
+    T: From<u8> + Into<u8> + Copy, {
+    fn from(value: TagLengthValue<T>) -> Self {
+        let mut buffer = Vec::with_capacity(value.length());
+
+        buffer.push(value.tag.into()); // byte 0
+        buffer.push(value.length() as u8); // byte 1
+        buffer.extend_from_slice(&value.value); // bytes 2 - length
+
+        buffer
+    }
+}
+
 impl<T> TryFrom<&[u8]> for TagLengthValue<T>
 where
-    T: From<u8> + Copy,
+    T: From<u8> + Into<u8> + Copy,
 {
     type Error = TagLengthValueError;
 
-    fn try_from(packet_data: &[u8]) -> Result<Self, Self::Error> {
-        if packet_data.len() < TAG_LENGTH_VALUE_HEADER_SIZE {
+    fn try_from(buffer: &[u8]) -> Result<Self, Self::Error> {
+        if buffer.len() < TAG_LENGTH_VALUE_HEADER_SIZE {
             return Err(TagLengthValueError::NotEnoughData);
         }
 
-        let tag = T::from(packet_data[0]);
-        let length = packet_data[1] as usize;
+        let tag = T::from(buffer[0]);
+        let length = buffer[1] as usize;
 
-        if packet_data.len() < length {
+        if buffer.len() < length {
             return Err(TagLengthValueError::NotEnoughData);
         }
 
@@ -54,8 +67,8 @@ where
             return Err(TagLengthValueError::InvalidLength(length));
         }
 
-        let value = packet_data[TAG_LENGTH_VALUE_HEADER_SIZE..length].to_vec();
+        let value = buffer[TAG_LENGTH_VALUE_HEADER_SIZE..length].to_vec();
 
-        Ok(Self { tag, length, value })
+        Ok(Self { tag, value })
     }
 }
