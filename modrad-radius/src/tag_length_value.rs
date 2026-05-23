@@ -1,23 +1,27 @@
+use std::fmt::{Debug, Formatter};
+
 const TAG_LENGTH_VALUE_HEADER_SIZE: usize = 2;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum TagLengthValueError {
     NotEnoughData,
     InvalidLength(usize),
 }
 
-pub struct TagLengthValue<T>
-where
-    T: From<u8> + Into<u8> + Copy,
-{
+#[derive(Clone, Eq, PartialEq)]
+pub struct TagLengthValue<T> {
     tag: T,
     value: Vec<u8>,
 }
 
 impl<T> TagLengthValue<T>
 where
-    T: From<u8> + Into<u8> + Copy,
+    T: Copy,
 {
+    pub fn from_tag_and_value(tag: T, value: Vec<u8>) -> Self {
+        Self { tag, value }
+    }
+
     pub fn tag(&self) -> T {
         self.tag
     }
@@ -33,7 +37,8 @@ where
 
 impl<T> From<TagLengthValue<T>> for Vec<u8>
 where
-    T: From<u8> + Into<u8> + Copy, {
+    T: Into<u8> + Copy,
+{
     fn from(value: TagLengthValue<T>) -> Self {
         let mut buffer = Vec::with_capacity(value.length());
 
@@ -47,7 +52,7 @@ where
 
 impl<T> TryFrom<&[u8]> for TagLengthValue<T>
 where
-    T: From<u8> + Into<u8> + Copy,
+    T: From<u8>,
 {
     type Error = TagLengthValueError;
 
@@ -70,5 +75,17 @@ where
         let value = buffer[TAG_LENGTH_VALUE_HEADER_SIZE..length].to_vec();
 
         Ok(Self { tag, value })
+    }
+}
+
+impl<T> Debug for TagLengthValue<T>
+where
+    T: Debug + Copy,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TagLengthValue")
+            .field("tag", &self.tag)
+            .field("length", &self.length())
+            .finish()
     }
 }
