@@ -1,9 +1,9 @@
 use crate::listener::udp::config::UdpRadiusListenerConfig;
 use crate::listener::{RadiusListener, RadiusListenerError};
 use async_trait::async_trait;
-use modrad_radius::packet::RadiusPacket;
 use std::net::SocketAddr;
 use tokio::net::UdpSocket;
+use modrad_radius::packet::radius::RadiusPacket;
 
 pub mod config;
 
