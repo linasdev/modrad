@@ -6,7 +6,7 @@ macro_rules! define_byte_enum {
             $($variant:ident = $value:expr),* $(,)?
         }
     ) => {
-        #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
         pub enum $name {
             $( $variant, )*
             $other_variant(u8),
@@ -67,7 +67,7 @@ macro_rules! define_byte_enum {
             $($variant:ident = $value:expr),* $(,)?
         }
     ) => {
-        #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
         pub enum $name {
             $( $variant, )*
         }
