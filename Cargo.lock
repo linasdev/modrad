@@ -3,8 +3,15 @@
 version = 4
 
 [[package]]
+name = "modrad-macros"
+version = "0.1.0"
+
+[[package]]
 name = "modrad-radius"
 version = "0.1.0"
+dependencies = [
+ "modrad-macros",
+]
 
 [[package]]
 name = "modrad-server"
