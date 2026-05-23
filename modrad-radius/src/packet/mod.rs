@@ -8,7 +8,7 @@ pub mod code;
 
 const RADIUS_PACKET_HEADER_SIZE: usize = 20;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum RadiusPacketError {
     NotEnoughData,
     TooMuchData,
@@ -341,7 +341,7 @@ mod tests {
 
         let result = RadiusPacket::try_from(buffer).unwrap_err();
 
-        assert_that!(result, eq(&RadiusPacketError::TooMuchData));
+        assert_that!(result, matches_pattern!(RadiusPacketError::TooMuchData));
     }
 
     #[test]
@@ -356,6 +356,6 @@ mod tests {
 
         let result = RadiusPacket::try_from(buffer).unwrap_err();
 
-        assert_that!(result, eq(&RadiusPacketError::NotEnoughData));
+        assert_that!(result, matches_pattern!(RadiusPacketError::NotEnoughData));
     }
 }

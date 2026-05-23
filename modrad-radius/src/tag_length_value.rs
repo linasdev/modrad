@@ -2,7 +2,7 @@ use std::fmt::{Debug, Formatter};
 
 const TAG_LENGTH_VALUE_HEADER_SIZE: usize = 2;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum TagLengthValueError {
     NotEnoughData,
     InvalidLength(usize),
