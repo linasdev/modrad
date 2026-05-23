@@ -1,7 +1,7 @@
-use crate::tag_length_value::TagLengthValueError;
-use std::fmt::{Debug, Formatter};
 use crate::packet::radius::attribute::RadiusPacketAttribute;
 use crate::packet::radius::code::RadiusPacketCode;
+use crate::tag_length_value::TagLengthValueError;
+use std::fmt::{Debug, Formatter};
 
 pub mod attribute;
 pub mod code;
@@ -48,10 +48,10 @@ impl RadiusPacket {
     pub fn length(&self) -> usize {
         RADIUS_PACKET_HEADER_SIZE
             + self
-            .attributes
-            .iter()
-            .map(RadiusPacketAttribute::length)
-            .sum::<usize>()
+                .attributes
+                .iter()
+                .map(RadiusPacketAttribute::length)
+                .sum::<usize>()
     }
 
     pub fn authenticator(&self) -> &[u8; 16] {
@@ -147,8 +147,8 @@ impl From<TagLengthValueError> for RadiusPacketError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use googletest::prelude::*;
     use crate::packet::radius::attribute::RadiusPacketAttributeType;
+    use googletest::prelude::*;
 
     #[test]
     fn should_convert_from_radius_packet_without_attributes_to_byte_buffer() {

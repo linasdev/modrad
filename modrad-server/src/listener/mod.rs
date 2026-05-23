@@ -1,7 +1,7 @@
 use async_trait::async_trait;
+use modrad_radius::packet::radius::{RadiusPacket, RadiusPacketError};
 use std::net::{AddrParseError, SocketAddr};
 use tokio::io;
-use modrad_radius::packet::radius::{RadiusPacket, RadiusPacketError};
 
 pub mod udp;
 
