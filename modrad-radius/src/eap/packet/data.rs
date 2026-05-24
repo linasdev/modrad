@@ -89,7 +89,7 @@ impl TryFrom<(EapPacketCode, &[u8])> for EapPacketData {
 
                 let packet_type = EapPacketType::from(buffer[0]);
                 let type_data = EapPacketTypeData::try_from((packet_type, &buffer[1..]))?;
-                EapPacketData::Request {type_data}
+                EapPacketData::Request { type_data }
             }
             EapPacketCode::Response => {
                 if buffer.len() < 1 {
@@ -98,7 +98,7 @@ impl TryFrom<(EapPacketCode, &[u8])> for EapPacketData {
 
                 let packet_type = EapPacketType::from(buffer[0]);
                 let type_data = EapPacketTypeData::try_from((packet_type, &buffer[1..]))?;
-                EapPacketData::Response {type_data}
+                EapPacketData::Response { type_data }
             }
             EapPacketCode::Success => EapPacketData::Success,
             EapPacketCode::Failure => EapPacketData::Failure,

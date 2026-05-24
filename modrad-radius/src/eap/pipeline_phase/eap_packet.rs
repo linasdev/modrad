@@ -1,8 +1,8 @@
 use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::RadiusPacketAttributeType;
+use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
 use crate::pipeline::metadata::RadiusPacketMetadataKey;
-use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::phase::RadiusPipelinePhase;
 use log::{debug, info};
 
@@ -41,10 +41,14 @@ impl RadiusPipelinePhase for EapPacketRadiusPipelinePhase {
             Err(error) => {
                 match error {
                     EapPacketError::NotEnoughData => {
-                        info!("EAP-Message attribute is shorter than it's length field, skipping pipeline phase processing");
+                        info!(
+                            "EAP-Message attribute is shorter than it's length field, skipping pipeline phase processing"
+                        );
                     }
                     EapPacketError::InvalidCode => {
-                        info!("EAP-Message attribute contains an invalid EAP code, skipping pipeline phase processing");
+                        info!(
+                            "EAP-Message attribute contains an invalid EAP code, skipping pipeline phase processing"
+                        );
                     }
                 }
 
