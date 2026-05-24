@@ -42,3 +42,78 @@ impl RadiusPipeline for EapRadiusPipeline {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::eap::packet::code::EapPacketCode;
+    use crate::eap::packet::data::{EapPacketData, EapPacketType, EapPacketTypeData};
+    use crate::packet::RadiusPacket;
+    use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
+    use crate::packet::code::RadiusPacketCode;
+    use googletest::prelude::*;
+
+    #[test]
+    fn should_add_eap_packet_metadata_to_container_from_eap_message_attribute() {
+        let mut attributes = RadiusPacketAttributes::new();
+        attributes.push(RadiusPacketAttribute::from_tag_and_value(
+            RadiusPacketAttributeType::EAPMessage,
+            vec![2, 220, 0, 13, 1, 106, 111, 104, 110, 95, 100, 111, 101],
+        ));
+
+        let mut container = RadiusPacketContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0,
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                attributes,
+            ),
+            "127.0.0.1:1234".parse().unwrap(),
+        );
+
+        let mut target = EapRadiusPipeline::new();
+        target.process(&mut container).unwrap();
+
+        let result = container
+            .get_metadata::<EapPacket>(&RadiusPacketMetadataKey::EapPacket)
+            .unwrap();
+
+        assert_that!(result.code(), eq(EapPacketCode::Response));
+        assert_that!(result.identifier(), eq(220));
+        assert_that!(result.length(), eq(13));
+
+        let EapPacketData::Response { type_data } = result.data() else {
+            unreachable!()
+        };
+
+        assert_that!(type_data.packet_type(), eq(EapPacketType::Identity));
+        assert_that!(type_data.length(), eq(8));
+
+        let EapPacketTypeData::Identity(buffer) = type_data else {
+            unreachable!()
+        };
+
+        assert_that!(buffer, eq(&[106, 111, 104, 110, 95, 100, 111, 101]))
+    }
+
+    #[test]
+    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_message_attribute() {
+        let mut container = RadiusPacketContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0,
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                RadiusPacketAttributes::new(),
+            ),
+            "127.0.0.1:1234".parse().unwrap(),
+        );
+
+        let mut target = EapRadiusPipeline::new();
+        target.process(&mut container).unwrap();
+
+        assert_that!(
+            container.has_metadata_key(&RadiusPacketMetadataKey::EapPacket),
+            is_false()
+        );
+    }
+}
