@@ -12,7 +12,7 @@ const EAP_PACKET_HEADER_SIZE: usize = 4;
 #[derive(Debug)]
 pub enum EapPacketError {
     NotEnoughData,
-    TooMuchData,
+    InvalidCode,
 }
 
 pub struct EapPacket {
@@ -67,7 +67,7 @@ impl TryFrom<&[u8]> for EapPacket {
             return Err(EapPacketError::NotEnoughData);
         }
 
-        let code = EapPacketCode::from(buffer[0]);
+        let code = EapPacketCode::try_from(buffer[0]).map_err(|_| EapPacketError::InvalidCode)?;
         let identifier = buffer[1];
         let length = u16::from_be_bytes([buffer[2], buffer[3]]) as usize;
 
@@ -205,22 +205,6 @@ mod tests {
     }
 
     #[test]
-    fn should_convert_from_eap_packet_other_to_byte_buffer() {
-        let packet = EapPacket::new(0, EapPacketData::Other(0, vec![1, 2, 3]));
-        let result = Vec::from(packet);
-
-        let expected_result = vec![
-            0, // Code
-            0, // Identifier
-            0, // Length MSB
-            7, // Length LSB
-            1, 2, 3, // Packet data
-        ];
-
-        assert_that!(result, eq(&expected_result));
-    }
-
-    #[test]
     fn should_convert_from_byte_buffer_to_eap_packet_request() {
         let buffer = vec![
             1, // Request
@@ -328,27 +312,6 @@ mod tests {
                 data: matches_pattern!(EapPacketData::Request {
                     type_data: matches_pattern!(EapPacketTypeData::Other(eq(&0), eq(&[1, 2, 3]))),
                 }),
-            },)
-        );
-    }
-
-    #[test]
-    fn should_convert_from_byte_buffer_to_eap_packet_other() {
-        let buffer = vec![
-            0, // Code
-            0, // Identifier
-            0, // Length MSB
-            7, // Length LSB
-            1, 2, 3, // Packet data
-        ];
-
-        let result = EapPacket::try_from(&buffer[..]).unwrap();
-
-        assert_that!(
-            result,
-            matches_pattern!(EapPacket {
-                identifier: eq(&0),
-                data: matches_pattern!(EapPacketData::Other(eq(&0), eq(&[1, 2, 3]))),
             },)
         );
     }

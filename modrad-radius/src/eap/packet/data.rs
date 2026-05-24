@@ -23,7 +23,6 @@ pub enum EapPacketData {
     Response { type_data: EapPacketTypeData },
     Success,
     Failure,
-    Other(u8, Vec<u8>),
 }
 
 #[derive(Debug)]
@@ -51,7 +50,6 @@ impl EapPacketData {
                 1 + type_data.length()
             }
             EapPacketData::Success | EapPacketData::Failure => 0,
-            EapPacketData::Other(_, buffer) => buffer.len(),
         }
     }
 
@@ -61,7 +59,6 @@ impl EapPacketData {
             EapPacketData::Response { .. } => EapPacketCode::Response,
             EapPacketData::Success => EapPacketCode::Success,
             EapPacketData::Failure => EapPacketCode::Failure,
-            EapPacketData::Other(code, _) => EapPacketCode::Other(*code),
         }
     }
 }
@@ -76,7 +73,6 @@ impl From<EapPacketData> for Vec<u8> {
                 buffer
             }
             EapPacketData::Success | EapPacketData::Failure => vec![],
-            EapPacketData::Other(_, buffer) => buffer,
         }
     }
 }
@@ -85,25 +81,27 @@ impl TryFrom<(EapPacketCode, &[u8])> for EapPacketData {
     type Error = EapPacketError;
 
     fn try_from((code, buffer): (EapPacketCode, &[u8])) -> Result<Self, Self::Error> {
-        let type_data = match code {
-            EapPacketCode::Request | EapPacketCode::Response => {
+        let data = match code {
+            EapPacketCode::Request => {
                 if buffer.len() < 1 {
                     return Err(EapPacketError::NotEnoughData);
                 }
 
                 let packet_type = EapPacketType::from(buffer[0]);
                 let type_data = EapPacketTypeData::try_from((packet_type, &buffer[1..]))?;
-                Some(type_data)
+                EapPacketData::Request {type_data}
             }
-            _ => None,
-        };
+            EapPacketCode::Response => {
+                if buffer.len() < 1 {
+                    return Err(EapPacketError::NotEnoughData);
+                }
 
-        let data = match (code, type_data) {
-            (EapPacketCode::Request, Some(type_data)) => EapPacketData::Request { type_data },
-            (EapPacketCode::Response, Some(type_data)) => EapPacketData::Response { type_data },
-            (EapPacketCode::Success, None) => EapPacketData::Success,
-            (EapPacketCode::Failure, None) => EapPacketData::Failure,
-            _ => EapPacketData::Other(code.into(), buffer.to_vec()),
+                let packet_type = EapPacketType::from(buffer[0]);
+                let type_data = EapPacketTypeData::try_from((packet_type, &buffer[1..]))?;
+                EapPacketData::Response {type_data}
+            }
+            EapPacketCode::Success => EapPacketData::Success,
+            EapPacketCode::Failure => EapPacketData::Failure,
         };
 
         Ok(data)
@@ -271,15 +269,6 @@ mod tests {
     }
 
     #[test]
-    fn should_convert_from_eap_packet_data_other_to_byte_buffer() {
-        let data = EapPacketData::Other(0, vec![1, 2, 3]);
-        let result = Vec::from(data);
-
-        let expected_result = vec![1, 2, 3];
-        assert_that!(result, eq(&expected_result));
-    }
-
-    #[test]
     fn should_convert_from_code_and_byte_buffer_to_eap_packet_data_request() {
         let code = EapPacketCode::Request;
         let buffer = vec![
@@ -333,19 +322,6 @@ mod tests {
         let result = EapPacketData::try_from((code, &buffer[..])).unwrap();
 
         assert_that!(result, matches_pattern!(EapPacketData::Failure),);
-    }
-
-    #[test]
-    fn should_convert_from_code_and_byte_buffer_to_eap_packet_data_other() {
-        let code = EapPacketCode::Other(0);
-        let buffer = vec![1, 2, 3];
-
-        let result = EapPacketData::try_from((code, &buffer[..])).unwrap();
-
-        assert_that!(
-            result,
-            matches_pattern!(EapPacketData::Other(eq(&0), eq(&[1, 2, 3]))),
-        );
     }
 
     #[test]
