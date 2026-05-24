@@ -25,6 +25,10 @@ impl EapPacket {
         Self { identifier, data }
     }
 
+    pub fn code(&self) -> EapPacketCode {
+        self.data.code()
+    }
+
     pub fn identifier(&self) -> u8 {
         self.identifier
     }
@@ -35,6 +39,23 @@ impl EapPacket {
 
     pub fn data(&self) -> &EapPacketData {
         &self.data
+    }
+}
+
+impl From<EapPacket> for Vec<u8> {
+    fn from(packet: EapPacket) -> Self {
+        let mut buffer = Vec::with_capacity(packet.length());
+
+        buffer.push(packet.code().into()); // byte 0
+        buffer.push(packet.identifier); // byte 1
+
+        for byte in u16::to_be_bytes(packet.length() as u16) {
+            buffer.push(byte); // bytes 2 & 3
+        }
+
+        buffer.extend_from_slice(&Vec::from(packet.data)); // bytes 4 - length
+
+        buffer
     }
 }
 
@@ -77,5 +98,243 @@ impl Debug for EapPacket {
             .field("length", &self.length())
             .field("data", self.data())
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use googletest::prelude::*;
+    use crate::eap::packet::data::EapPacketTypeData;
+
+    #[test]
+    fn should_convert_from_eap_packet_request_to_byte_buffer() {
+        let packet = EapPacket::new(0, EapPacketData::Request {
+            type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
+        });
+        let result = Vec::from(packet);
+
+        let expected_result = vec![
+            1, // Request
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            1, // Identity
+            1, 2, 3, // Identity data
+        ];
+
+        assert_that!(result, eq(&expected_result));
+    }
+
+    #[test]
+    fn should_convert_from_eap_packet_response_to_byte_buffer() {
+        let packet = EapPacket::new(0, EapPacketData::Response {
+            type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
+        });
+        let result = Vec::from(packet);
+
+        let expected_result = vec![
+            2, // Response
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            1, // Identity
+            1, 2, 3, // Identity data
+        ];
+
+        assert_that!(result, eq(&expected_result));
+    }
+
+    #[test]
+    fn should_convert_from_eap_packet_success_to_byte_buffer() {
+        let packet = EapPacket::new(0, EapPacketData::Success);
+        let result = Vec::from(packet);
+
+        let expected_result = vec![
+            3, // Success
+            0, // Identifier
+            0, // Length MSB
+            4, // Length LSB
+        ];
+
+        assert_that!(result, eq(&expected_result));
+    }
+
+    #[test]
+    fn should_convert_from_eap_packet_failure_to_byte_buffer() {
+        let packet = EapPacket::new(0, EapPacketData::Failure);
+        let result = Vec::from(packet);
+
+        let expected_result = vec![
+            4, // Failure
+            0, // Identifier
+            0, // Length MSB
+            4, // Length LSB
+        ];
+
+        assert_that!(result, eq(&expected_result));
+    }
+
+    #[test]
+    fn should_convert_from_eap_packet_request_other_to_byte_buffer() {
+        let packet = EapPacket::new(0, EapPacketData::Request {
+            type_data:EapPacketTypeData::Other(0, vec![1, 2, 3]),
+        });
+
+        let result = Vec::from(packet);
+
+        let expected_result = vec![
+            1, // Request
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            0, // Type
+            1, 2, 3, // Type data
+        ];
+
+        assert_that!(result, eq(&expected_result));
+    }
+
+    #[test]
+    fn should_convert_from_eap_packet_other_to_byte_buffer() {
+        let packet = EapPacket::new(0, EapPacketData::Other(0, vec![1, 2, 3]));
+        let result = Vec::from(packet);
+
+        let expected_result = vec![
+            0, // Code
+            0, // Identifier
+            0, // Length MSB
+            7, // Length LSB
+            1, 2, 3, // Packet data
+        ];
+
+        assert_that!(result, eq(&expected_result));
+    }
+
+    #[test]
+    fn should_convert_from_byte_buffer_to_eap_packet_request() {
+        let buffer = vec![
+            1, // Request
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            1, // Identity
+            1, 2, 3, // Identity data
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap();
+
+        assert_that!(result, matches_pattern!(
+            EapPacket {
+                identifier: eq(&0),
+                data: matches_pattern!(EapPacketData::Request {
+                    type_data: matches_pattern!(EapPacketTypeData::Identity(&[1, 2, 3])),
+                }),
+            },
+        ));
+    }
+
+    #[test]
+    fn should_convert_from_byte_buffer_to_eap_packet_response() {
+        let buffer = vec![
+            2, // Response
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            1, // Identity
+            1, 2, 3, // Identity data
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap();
+
+        assert_that!(result, matches_pattern!(
+            EapPacket {
+                identifier: eq(&0),
+                data: matches_pattern!(EapPacketData::Response {
+                    type_data: matches_pattern!(EapPacketTypeData::Identity(&[1, 2, 3])),
+                }),
+            },
+        ));
+    }
+
+    #[test]
+    fn should_convert_from_byte_buffer_to_eap_packet_success() {
+        let buffer = vec![
+            3, // Success
+            0, // Identifier
+            0, // Length MSB
+            4, // Length LSB
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap();
+
+        assert_that!(result, matches_pattern!(
+            EapPacket {
+                identifier: eq(&0),
+                data: matches_pattern!(EapPacketData::Success),
+            },
+        ));
+    }
+
+    #[test]
+    fn should_convert_from_byte_buffer_to_eap_packet_failure() {
+        let buffer = vec![
+            4, // Failure
+            0, // Identifier
+            0, // Length MSB
+            4, // Length LSB
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap();
+
+        assert_that!(result, matches_pattern!(
+            EapPacket {
+                identifier: eq(&0),
+                data: matches_pattern!(EapPacketData::Failure),
+            },
+        ));
+    }
+
+    #[test]
+    fn should_convert_from_byte_buffer_to_eap_packet_request_other() {
+        let buffer = vec![
+            1, // Request
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            0, // Type
+            1, 2, 3, // Type data
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap();
+
+        assert_that!(result, matches_pattern!(
+            EapPacket {
+                identifier: eq(&0),
+                data: matches_pattern!(EapPacketData::Request {
+                    type_data: matches_pattern!(EapPacketTypeData::Other(eq(&0), eq(&[1, 2, 3]))),
+                }),
+            },
+        ));
+    }
+
+    #[test]
+    fn should_convert_from_byte_buffer_to_eap_packet_other() {
+        let buffer = vec![
+            0, // Code
+            0, // Identifier
+            0, // Length MSB
+            7, // Length LSB
+            1, 2, 3, // Packet data
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap();
+
+        assert_that!(result, matches_pattern!(
+            EapPacket {
+                identifier: eq(&0),
+                data: matches_pattern!(EapPacketData::Other(eq(&0), eq(&[1, 2, 3]))),
+            },
+        ));
     }
 }

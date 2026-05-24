@@ -23,7 +23,7 @@ pub enum EapPacketData {
     Response { type_data: EapPacketTypeData },
     Success,
     Failure,
-    Other(EapPacketCode, Vec<u8>),
+    Other(u8, Vec<u8>),
 }
 
 #[derive(Debug)]
@@ -41,7 +41,7 @@ pub enum EapPacketTypeData {
         vendor_type: u32,
         vendor_data: Vec<u8>,
     },
-    Other(EapPacketType, Vec<u8>),
+    Other(u8, Vec<u8>),
 }
 
 impl EapPacketData {
@@ -54,13 +54,24 @@ impl EapPacketData {
             EapPacketData::Other(_, buffer) => buffer.len(),
         }
     }
+
+    pub fn code(&self) -> EapPacketCode {
+        match self {
+            EapPacketData::Request { .. } => EapPacketCode::Request,
+            EapPacketData::Response { .. } => EapPacketCode::Response,
+            EapPacketData::Success => EapPacketCode::Success,
+            EapPacketData::Failure => EapPacketCode::Failure,
+            EapPacketData::Other(code, _) => EapPacketCode::Other(*code),
+        }
+    }
 }
 
 impl From<EapPacketData> for Vec<u8> {
     fn from(data: EapPacketData) -> Self {
         match data {
             EapPacketData::Request { type_data } | EapPacketData::Response { type_data } => {
-                let mut buffer = vec![type_data.packet_type().into()];
+                let mut buffer = Vec::with_capacity(1 + type_data.length());
+                buffer.push(type_data.packet_type().into());
                 buffer.extend_from_slice(&Vec::from(type_data));
                 buffer
             }
@@ -92,7 +103,7 @@ impl TryFrom<(EapPacketCode, &[u8])> for EapPacketData {
             (EapPacketCode::Response, Some(type_data)) => EapPacketData::Response { type_data },
             (EapPacketCode::Success, None) => EapPacketData::Success,
             (EapPacketCode::Failure, None) => EapPacketData::Failure,
-            _ => EapPacketData::Other(code, buffer.to_vec()),
+            _ => EapPacketData::Other(code.into(), buffer.to_vec()),
         };
 
         Ok(data)
@@ -124,7 +135,7 @@ impl EapPacketTypeData {
             EapPacketTypeData::OneTimePassword(_) => EapPacketType::OneTimePassword,
             EapPacketTypeData::GenericTokenCard(_) => EapPacketType::GenericTokenCard,
             EapPacketTypeData::ExpandedType { .. } => EapPacketType::ExpandedType,
-            EapPacketTypeData::Other(packet_type, _) => *packet_type,
+            EapPacketTypeData::Other(packet_type, _) => EapPacketType::Other(*packet_type),
         }
     }
 }
@@ -197,7 +208,7 @@ impl TryFrom<(EapPacketType, &[u8])> for EapPacketTypeData {
                     vendor_data,
                 })
             }
-            EapPacketType::Other(_) => Ok(EapPacketTypeData::Other(packet_type, buffer.to_vec())),
+            EapPacketType::Other(packet_type) => Ok(EapPacketTypeData::Other(packet_type, buffer.to_vec())),
         }
     }
 }
@@ -259,7 +270,7 @@ mod tests {
 
     #[test]
     fn should_convert_from_eap_packet_data_other_to_byte_buffer() {
-        let data = EapPacketData::Other(EapPacketCode::Other(0), vec![1, 2, 3]);
+        let data = EapPacketData::Other(0, vec![1, 2, 3]);
         let result = Vec::from(data);
 
         let expected_result = vec![1, 2, 3];
@@ -332,7 +343,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacketData::Other(
-                eq(&EapPacketCode::Other(0)),
+                eq(&0),
                 eq(&[1, 2, 3])
             )),
         );
@@ -422,7 +433,7 @@ mod tests {
 
     #[test]
     fn should_convert_from_eap_packet_type_data_other_to_byte_buffer() {
-        let type_data = EapPacketTypeData::Other(EapPacketType::Other(0), vec![1, 2, 3]);
+        let type_data = EapPacketTypeData::Other(0, vec![1, 2, 3]);
         let result = Vec::from(type_data);
 
         let expected_result = vec![1, 2, 3];
@@ -548,7 +559,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacketTypeData::Other(
-                eq(&EapPacketType::Other(0)),
+                eq(&0),
                 eq(&[1, 2, 3])
             )),
         );
