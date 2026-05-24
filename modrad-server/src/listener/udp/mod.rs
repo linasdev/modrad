@@ -2,6 +2,7 @@ use crate::listener::udp::config::UdpRadiusListenerConfig;
 use crate::listener::{RadiusListener, RadiusListenerError};
 use async_trait::async_trait;
 use modrad_radius::packet::RadiusPacket;
+use modrad_radius::pipeline::container::RadiusPacketContainer;
 use std::net::SocketAddr;
 use tokio::net::UdpSocket;
 
@@ -26,11 +27,11 @@ impl UdpRadiusListener {
 
 #[async_trait]
 impl RadiusListener for UdpRadiusListener {
-    async fn recv(&self) -> Result<(RadiusPacket, SocketAddr), RadiusListenerError> {
+    async fn recv(&self) -> Result<RadiusPacketContainer, RadiusListenerError> {
         let mut buffer = vec![0u8; self.buffer_size];
         let (length, remote_address) = self.socket.recv_from(&mut buffer).await?;
         let packet = RadiusPacket::try_from(&buffer[..length])?;
 
-        Ok((packet, remote_address))
+        Ok(RadiusPacketContainer::new(packet, remote_address))
     }
 }
