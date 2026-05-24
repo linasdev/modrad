@@ -1,8 +1,8 @@
-use std::fmt::Debug;
 use crate::eap::packet::code::EapPacketCode;
 use crate::eap::packet::data::EapPacketData;
-use std::fmt::{Debug, Formatter};
 use crate::pipeline::metadata::RadiusPacketMetadata;
+use std::any::Any;
+use std::fmt::{Debug, Formatter};
 
 pub mod code;
 pub mod data;

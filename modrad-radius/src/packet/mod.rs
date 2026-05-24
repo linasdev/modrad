@@ -47,10 +47,10 @@ impl RadiusPacket {
     pub fn length(&self) -> usize {
         RADIUS_PACKET_HEADER_SIZE
             + self
-            .attributes
-            .iter()
-            .map(RadiusPacketAttribute::length)
-            .sum::<usize>()
+                .attributes
+                .iter()
+                .map(RadiusPacketAttribute::length)
+                .sum::<usize>()
     }
 
     pub fn authenticator(&self) -> &[u8; 16] {
@@ -320,16 +320,16 @@ mod tests {
         assert_that!(
             result_attributes.next(),
             some(eq(&RadiusPacketAttribute::from_tag_and_value(
-                    RadiusPacketAttributeType::UserName,
-                    b"hello".to_vec()
-                ))),
+                RadiusPacketAttributeType::UserName,
+                b"hello".to_vec()
+            ))),
         );
         assert_that!(
             result_attributes.next(),
             some(eq(&RadiusPacketAttribute::from_tag_and_value(
-                    RadiusPacketAttributeType::UserPassword,
-                    b"world".to_vec()
-                ))),
+                RadiusPacketAttributeType::UserPassword,
+                b"world".to_vec()
+            ))),
         );
         assert_that!(result_attributes.next(), none());
     }

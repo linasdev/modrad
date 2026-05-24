@@ -1,6 +1,6 @@
-use modrad_macros::define_byte_enum;
-use crate::eap::packet::code::EapPacketCode;
 use crate::eap::packet::EapPacketError;
+use crate::eap::packet::code::EapPacketCode;
+use modrad_macros::define_byte_enum;
 
 const EAP_PACKET_EXPANDED_TYPE_HEADER_SIZE: usize = 7;
 
@@ -19,12 +19,8 @@ define_byte_enum!(
 
 #[derive(Debug)]
 pub enum EapPacketData {
-    Request {
-        type_data: EapPacketTypeData,
-    },
-    Response {
-        type_data: EapPacketTypeData,
-    },
+    Request { type_data: EapPacketTypeData },
+    Response { type_data: EapPacketTypeData },
     Success,
     Failure,
     Other(EapPacketCode, Vec<u8>),
@@ -71,17 +67,13 @@ impl TryFrom<(EapPacketCode, &[u8])> for EapPacketData {
                 let packet_type = EapPacketType::from(buffer[0]);
                 let type_data = EapPacketTypeData::try_from((packet_type, &buffer[1..]))?;
                 Some(type_data)
-            },
+            }
             _ => None,
         };
 
         let data = match (code, type_data) {
-            (EapPacketCode::Request, Some(type_data)) => EapPacketData::Request {
-                type_data,
-            },
-            (EapPacketCode::Response, Some(type_data)) => EapPacketData::Response {
-                type_data,
-            },
+            (EapPacketCode::Request, Some(type_data)) => EapPacketData::Request { type_data },
+            (EapPacketCode::Response, Some(type_data)) => EapPacketData::Response { type_data },
             (EapPacketCode::Success, None) => EapPacketData::Success,
             (EapPacketCode::Failure, None) => EapPacketData::Failure,
             _ => EapPacketData::Other(code, buffer.to_vec()),
@@ -100,7 +92,7 @@ impl EapPacketTypeData {
             EapPacketTypeData::MD5Challenge(buffer) => buffer.len(),
             EapPacketTypeData::OneTimePassword(buffer) => buffer.len(),
             EapPacketTypeData::GenericTokenCard(buffer) => buffer.len(),
-            EapPacketTypeData::ExpandedType {  vendor_data, .. } => {
+            EapPacketTypeData::ExpandedType { vendor_data, .. } => {
                 EAP_PACKET_EXPANDED_TYPE_HEADER_SIZE + vendor_data.len()
             }
             EapPacketTypeData::Other(_, buffer) => buffer.len(),
@@ -118,10 +110,14 @@ impl TryFrom<(EapPacketType, &[u8])> for EapPacketTypeData {
             EapPacketType::Nak => {
                 let supported_types = buffer.iter().copied().map(EapPacketType::from).collect();
                 Ok(EapPacketTypeData::Nak { supported_types })
-            },
+            }
             EapPacketType::MD5Challenge => Ok(EapPacketTypeData::MD5Challenge(buffer.to_vec())),
-            EapPacketType::OneTimePassword => Ok(EapPacketTypeData::OneTimePassword(buffer.to_vec())),
-            EapPacketType::GenericTokenCard => Ok(EapPacketTypeData::GenericTokenCard(buffer.to_vec())),
+            EapPacketType::OneTimePassword => {
+                Ok(EapPacketTypeData::OneTimePassword(buffer.to_vec()))
+            }
+            EapPacketType::GenericTokenCard => {
+                Ok(EapPacketTypeData::GenericTokenCard(buffer.to_vec()))
+            }
             EapPacketType::ExpandedType => {
                 if buffer.len() < EAP_PACKET_EXPANDED_TYPE_HEADER_SIZE {
                     return Err(EapPacketError::NotEnoughData);
@@ -136,7 +132,7 @@ impl TryFrom<(EapPacketType, &[u8])> for EapPacketTypeData {
                     vendor_type,
                     vendor_data,
                 })
-            },
+            }
             EapPacketType::Other(_) => Ok(EapPacketTypeData::Other(packet_type, buffer.to_vec())),
         }
     }
