@@ -27,7 +27,7 @@ impl RadiusPipelinePhase for EapPacketRadiusPipelinePhase {
             return Ok(());
         }
 
-        info!("EAP-Message attribute found in packet, processing pipeline phase");
+        info!("EAP-Message attribute(s) found in packet, processing pipeline phase");
 
         let eap_message: Vec<u8> = attributes
             .get(RadiusPacketAttributeType::EAPMessage)
@@ -42,22 +42,24 @@ impl RadiusPipelinePhase for EapPacketRadiusPipelinePhase {
                 match error {
                     EapPacketError::NotEnoughData => {
                         info!(
-                            "EAP-Message attribute is shorter than it's length field, skipping pipeline phase processing"
+                            "EAP-Message attribute(s) total length is shorter than it's length field, skipping pipeline phase processing"
                         );
+                        return Ok(());
                     }
                     EapPacketError::InvalidCode => {
                         info!(
-                            "EAP-Message attribute contains an invalid EAP code, skipping pipeline phase processing"
+                            "EAP-Message attribute(s) contains an invalid EAP code, skipping pipeline phase processing"
                         );
+                        return Ok(());
                     }
                 }
 
+                #[allow(unreachable_code)]
                 return Err(RadiusPipelineError::EapPacket(error));
             }
         };
 
         info!("Valid EAP-Message attribute(s) found in packet, adding EapPacket metadata");
-
         packet_container.set_metadata(RadiusPacketMetadataKey::EapPacket, eap_packet);
 
         Ok(())
