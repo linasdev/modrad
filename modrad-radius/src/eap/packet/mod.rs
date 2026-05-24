@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use crate::eap::packet::code::EapPacketCode;
 use crate::eap::packet::data::EapPacketData;
+use std::fmt::{Debug, Formatter};
 
 pub mod code;
 pub mod data;
@@ -55,5 +56,15 @@ impl TryFrom<&[u8]> for EapPacket {
         let data = EapPacketData::try_from((code, &buffer[EAP_PACKET_HEADER_SIZE..length]))?;
 
         Ok(Self { identifier, data })
+    }
+}
+
+impl Debug for EapPacket {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EapPacket")
+            .field("identifier", &self.identifier())
+            .field("length", &self.length())
+            .field("data", self.data())
+            .finish()
     }
 }

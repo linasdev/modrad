@@ -17,6 +17,7 @@ define_byte_enum!(
     }
 );
 
+#[derive(Debug)]
 pub enum EapPacketData {
     Request {
         type_data: EapPacketTypeData,
@@ -29,6 +30,7 @@ pub enum EapPacketData {
     Other(EapPacketCode, Vec<u8>),
 }
 
+#[derive(Debug)]
 pub enum EapPacketTypeData {
     Identity(Vec<u8>),
     Notification(Vec<u8>),
