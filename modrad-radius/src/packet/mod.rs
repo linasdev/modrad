@@ -1,4 +1,4 @@
-use crate::packet::attribute::RadiusPacketAttribute;
+use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
 use crate::packet::code::RadiusPacketCode;
 use crate::tag_length_value::TagLengthValueError;
 use std::fmt::{Debug, Formatter};
@@ -18,7 +18,7 @@ pub struct RadiusPacket {
     code: RadiusPacketCode,
     identifier: u8,
     authenticator: [u8; 16],
-    attributes: Vec<RadiusPacketAttribute>,
+    attributes: RadiusPacketAttributes,
 }
 
 impl RadiusPacket {
@@ -26,7 +26,7 @@ impl RadiusPacket {
         code: RadiusPacketCode,
         identifier: u8,
         authenticator: [u8; 16],
-        attributes: Vec<RadiusPacketAttribute>,
+        attributes: RadiusPacketAttributes,
     ) -> Self {
         Self {
             code,
@@ -57,8 +57,12 @@ impl RadiusPacket {
         &self.authenticator
     }
 
-    pub fn attributes(&self) -> &[RadiusPacketAttribute] {
+    pub fn attributes(&self) -> &RadiusPacketAttributes {
         &self.attributes
+    }
+
+    pub fn attributes_mut(&mut self) -> &mut RadiusPacketAttributes {
+        &mut self.attributes
     }
 }
 
@@ -105,7 +109,7 @@ impl TryFrom<&[u8]> for RadiusPacket {
         let authenticator: [u8; 16] = buffer[4..RADIUS_PACKET_HEADER_SIZE].try_into().unwrap();
 
         let mut offset = RADIUS_PACKET_HEADER_SIZE;
-        let mut attributes = vec![];
+        let mut attributes = RadiusPacketAttributes::new();
         while offset < length {
             let attribute = RadiusPacketAttribute::try_from(&buffer[offset..])?;
             offset += attribute.length();
@@ -151,7 +155,7 @@ mod tests {
             RadiusPacketCode::AccessRequest,
             1,
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-            vec![],
+            RadiusPacketAttributes::new(),
         );
 
         let result = Vec::from(packet);
@@ -169,14 +173,16 @@ mod tests {
 
     #[test]
     fn should_convert_from_radius_packet_with_single_attribute_to_byte_buffer() {
+        let mut attributes = RadiusPacketAttributes::new();
+        attributes.push(RadiusPacketAttribute::from_tag_and_value(
+            RadiusPacketAttributeType::UserName,
+            vec![],
+        ));
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
             1,
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-            vec![RadiusPacketAttribute::from_tag_and_value(
-                RadiusPacketAttributeType::UserName,
-                vec![],
-            )],
+            attributes,
         );
 
         let result = Vec::from(packet);
@@ -196,20 +202,20 @@ mod tests {
 
     #[test]
     fn should_convert_from_radius_packet_with_multiple_attributes_to_byte_buffer() {
+        let mut attributes = RadiusPacketAttributes::new();
+        attributes.push(RadiusPacketAttribute::from_tag_and_value(
+            RadiusPacketAttributeType::UserName,
+            b"hello".to_vec(),
+        ));
+        attributes.push(RadiusPacketAttribute::from_tag_and_value(
+            RadiusPacketAttributeType::UserPassword,
+            b"world".to_vec(),
+        ));
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
             1,
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-            vec![
-                RadiusPacketAttribute::from_tag_and_value(
-                    RadiusPacketAttributeType::UserName,
-                    b"hello".to_vec(),
-                ),
-                RadiusPacketAttribute::from_tag_and_value(
-                    RadiusPacketAttributeType::UserPassword,
-                    b"world".to_vec(),
-                ),
-            ],
+            attributes,
         );
 
         let result = Vec::from(packet);
@@ -250,7 +256,7 @@ mod tests {
             result.authenticator(),
             eq(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         );
-        assert_that!(result.attributes(), is_empty());
+        assert_that!(result.attributes().iter().next(), none());
     }
 
     #[test]
@@ -266,6 +272,7 @@ mod tests {
         ];
 
         let result = RadiusPacket::try_from(&buffer[..]).unwrap();
+        let mut result_attributes = result.attributes().iter();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
         assert_that!(result.identifier(), eq(1));
@@ -275,12 +282,13 @@ mod tests {
             eq(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         );
         assert_that!(
-            result.attributes(),
-            elements_are![eq(&RadiusPacketAttribute::from_tag_and_value(
+            result_attributes.next(),
+            some(eq(&RadiusPacketAttribute::from_tag_and_value(
                 RadiusPacketAttributeType::UserName,
                 vec![]
-            )),]
+            ))),
         );
+        assert_that!(result_attributes.next(), none());
     }
 
     #[test]
@@ -300,6 +308,7 @@ mod tests {
         ];
 
         let result = RadiusPacket::try_from(&buffer[..]).unwrap();
+        let mut result_attributes = result.attributes().iter();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
         assert_that!(result.identifier(), eq(1));
@@ -309,18 +318,20 @@ mod tests {
             eq(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         );
         assert_that!(
-            result.attributes(),
-            elements_are![
-                eq(&RadiusPacketAttribute::from_tag_and_value(
+            result_attributes.next(),
+            some(eq(&RadiusPacketAttribute::from_tag_and_value(
                     RadiusPacketAttributeType::UserName,
                     b"hello".to_vec()
-                )),
-                eq(&RadiusPacketAttribute::from_tag_and_value(
+                ))),
+        );
+        assert_that!(
+            result_attributes.next(),
+            some(eq(&RadiusPacketAttribute::from_tag_and_value(
                     RadiusPacketAttributeType::UserPassword,
                     b"world".to_vec()
-                )),
-            ]
+                ))),
         );
+        assert_that!(result_attributes.next(), none());
     }
 
     #[test]
@@ -343,7 +354,7 @@ mod tests {
             result.authenticator(),
             eq(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         );
-        assert_that!(result.attributes(), is_empty());
+        assert_that!(result.attributes().iter().next(), none());
     }
 
     #[test]

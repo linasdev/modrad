@@ -1,7 +1,12 @@
+use std::fmt::Debug;
 use crate::tag_length_value::TagLengthValue;
 use modrad_macros::define_byte_enum;
 
 pub type RadiusPacketAttribute = TagLengthValue<RadiusPacketAttributeType>;
+
+pub struct RadiusPacketAttributes {
+    attributes: Vec<RadiusPacketAttribute>,
+}
 
 define_byte_enum!(
     RadiusPacketAttributeType {
@@ -55,3 +60,73 @@ define_byte_enum!(
         MessageAuthenticator = 80,
     }
 );
+
+impl RadiusPacketAttributes {
+    pub fn new() -> Self {
+        Self {
+            attributes: vec![],
+        }
+    }
+
+    pub fn has(&self, attribute_type: RadiusPacketAttributeType) -> bool {
+        self.attributes.iter().any(|attribute| attribute.tag() == attribute_type)
+    }
+
+    pub fn count(&self, attribute_type: RadiusPacketAttributeType) -> usize {
+        self.attributes.iter().filter(|attribute| attribute.tag() == attribute_type).count()
+    }
+
+    pub fn get(&self, attribute_type: RadiusPacketAttributeType) -> Vec<&RadiusPacketAttribute> {
+        self.attributes.iter()
+            .filter(|attribute| attribute.tag() == attribute_type)
+            .collect()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &RadiusPacketAttribute> {
+        self.attributes.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut RadiusPacketAttribute> {
+        self.attributes.iter_mut()
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = RadiusPacketAttribute> {
+        self.attributes.into_iter()
+    }
+
+    pub fn push(&mut self, attribute: RadiusPacketAttribute) {
+        self.attributes.push(attribute)
+    }
+
+    pub fn remove(&mut self, attribute_type: RadiusPacketAttributeType, attribute_index: usize) -> Option<RadiusPacketAttribute> {
+        let index = self.attributes.iter()
+            .enumerate()
+            .filter(|(_, attribute)| attribute.tag() == attribute_type)
+            .map(|(index, _)| index)
+            .nth(attribute_index);
+
+        if let Some(index) = index {
+            Some(self.attributes.remove(index))
+        } else {
+            None
+        }
+    }
+
+    pub fn remove_all(&mut self, attribute_type: RadiusPacketAttributeType) -> Vec<RadiusPacketAttribute> {
+        self.attributes
+            .extract_if(.., |attribute| attribute.tag() != attribute_type)
+            .collect()
+    }
+}
+
+impl Debug for RadiusPacketAttributes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_map = f.debug_map();
+
+        for attribute in self.attributes.iter() {
+            debug_map.entry(&attribute.tag(), &attribute.value());
+        }
+
+        debug_map.finish()
+    }
+}

@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use crate::eap::packet::code::EapPacketCode;
 use crate::eap::packet::data::EapPacketData;
 use std::fmt::{Debug, Formatter};
+use crate::pipeline::metadata::RadiusPacketMetadata;
 
 pub mod code;
 pub mod data;
@@ -56,6 +57,16 @@ impl TryFrom<&[u8]> for EapPacket {
         let data = EapPacketData::try_from((code, &buffer[EAP_PACKET_HEADER_SIZE..length]))?;
 
         Ok(Self { identifier, data })
+    }
+}
+
+impl RadiusPacketMetadata for EapPacket {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 
