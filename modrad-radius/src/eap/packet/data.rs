@@ -208,7 +208,9 @@ impl TryFrom<(EapPacketType, &[u8])> for EapPacketTypeData {
                     vendor_data,
                 })
             }
-            EapPacketType::Other(packet_type) => Ok(EapPacketTypeData::Other(packet_type, buffer.to_vec())),
+            EapPacketType::Other(packet_type) => {
+                Ok(EapPacketTypeData::Other(packet_type, buffer.to_vec()))
+            }
         }
     }
 }
@@ -342,10 +344,7 @@ mod tests {
 
         assert_that!(
             result,
-            matches_pattern!(EapPacketData::Other(
-                eq(&0),
-                eq(&[1, 2, 3])
-            )),
+            matches_pattern!(EapPacketData::Other(eq(&0), eq(&[1, 2, 3]))),
         );
     }
 
@@ -558,10 +557,7 @@ mod tests {
 
         assert_that!(
             result,
-            matches_pattern!(EapPacketTypeData::Other(
-                eq(&0),
-                eq(&[1, 2, 3])
-            )),
+            matches_pattern!(EapPacketTypeData::Other(eq(&0), eq(&[1, 2, 3]))),
         );
     }
 }

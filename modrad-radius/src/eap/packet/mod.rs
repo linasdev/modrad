@@ -104,14 +104,17 @@ impl Debug for EapPacket {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use googletest::prelude::*;
     use crate::eap::packet::data::EapPacketTypeData;
+    use googletest::prelude::*;
 
     #[test]
     fn should_convert_from_eap_packet_request_to_byte_buffer() {
-        let packet = EapPacket::new(0, EapPacketData::Request {
-            type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
-        });
+        let packet = EapPacket::new(
+            0,
+            EapPacketData::Request {
+                type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
+            },
+        );
         let result = Vec::from(packet);
 
         let expected_result = vec![
@@ -128,9 +131,12 @@ mod tests {
 
     #[test]
     fn should_convert_from_eap_packet_response_to_byte_buffer() {
-        let packet = EapPacket::new(0, EapPacketData::Response {
-            type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
-        });
+        let packet = EapPacket::new(
+            0,
+            EapPacketData::Response {
+                type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
+            },
+        );
         let result = Vec::from(packet);
 
         let expected_result = vec![
@@ -177,9 +183,12 @@ mod tests {
 
     #[test]
     fn should_convert_from_eap_packet_request_other_to_byte_buffer() {
-        let packet = EapPacket::new(0, EapPacketData::Request {
-            type_data:EapPacketTypeData::Other(0, vec![1, 2, 3]),
-        });
+        let packet = EapPacket::new(
+            0,
+            EapPacketData::Request {
+                type_data: EapPacketTypeData::Other(0, vec![1, 2, 3]),
+            },
+        );
 
         let result = Vec::from(packet);
 
@@ -224,14 +233,15 @@ mod tests {
 
         let result = EapPacket::try_from(&buffer[..]).unwrap();
 
-        assert_that!(result, matches_pattern!(
-            EapPacket {
+        assert_that!(
+            result,
+            matches_pattern!(EapPacket {
                 identifier: eq(&0),
                 data: matches_pattern!(EapPacketData::Request {
                     type_data: matches_pattern!(EapPacketTypeData::Identity(&[1, 2, 3])),
                 }),
-            },
-        ));
+            },)
+        );
     }
 
     #[test]
@@ -247,14 +257,15 @@ mod tests {
 
         let result = EapPacket::try_from(&buffer[..]).unwrap();
 
-        assert_that!(result, matches_pattern!(
-            EapPacket {
+        assert_that!(
+            result,
+            matches_pattern!(EapPacket {
                 identifier: eq(&0),
                 data: matches_pattern!(EapPacketData::Response {
                     type_data: matches_pattern!(EapPacketTypeData::Identity(&[1, 2, 3])),
                 }),
-            },
-        ));
+            },)
+        );
     }
 
     #[test]
@@ -268,12 +279,13 @@ mod tests {
 
         let result = EapPacket::try_from(&buffer[..]).unwrap();
 
-        assert_that!(result, matches_pattern!(
-            EapPacket {
+        assert_that!(
+            result,
+            matches_pattern!(EapPacket {
                 identifier: eq(&0),
                 data: matches_pattern!(EapPacketData::Success),
-            },
-        ));
+            },)
+        );
     }
 
     #[test]
@@ -287,12 +299,13 @@ mod tests {
 
         let result = EapPacket::try_from(&buffer[..]).unwrap();
 
-        assert_that!(result, matches_pattern!(
-            EapPacket {
+        assert_that!(
+            result,
+            matches_pattern!(EapPacket {
                 identifier: eq(&0),
                 data: matches_pattern!(EapPacketData::Failure),
-            },
-        ));
+            },)
+        );
     }
 
     #[test]
@@ -308,14 +321,15 @@ mod tests {
 
         let result = EapPacket::try_from(&buffer[..]).unwrap();
 
-        assert_that!(result, matches_pattern!(
-            EapPacket {
+        assert_that!(
+            result,
+            matches_pattern!(EapPacket {
                 identifier: eq(&0),
                 data: matches_pattern!(EapPacketData::Request {
                     type_data: matches_pattern!(EapPacketTypeData::Other(eq(&0), eq(&[1, 2, 3]))),
                 }),
-            },
-        ));
+            },)
+        );
     }
 
     #[test]
@@ -330,11 +344,12 @@ mod tests {
 
         let result = EapPacket::try_from(&buffer[..]).unwrap();
 
-        assert_that!(result, matches_pattern!(
-            EapPacket {
+        assert_that!(
+            result,
+            matches_pattern!(EapPacket {
                 identifier: eq(&0),
                 data: matches_pattern!(EapPacketData::Other(eq(&0), eq(&[1, 2, 3]))),
-            },
-        ));
+            },)
+        );
     }
 }
