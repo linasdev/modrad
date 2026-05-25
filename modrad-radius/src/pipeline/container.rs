@@ -1,4 +1,5 @@
 use crate::packet::RadiusPacket;
+use crate::peer::RadiusPeer;
 use crate::pipeline::metadata::RadiusPacketMetadata;
 use std::any::TypeId;
 use std::collections::HashMap;
@@ -6,15 +7,15 @@ use std::net::SocketAddr;
 
 pub struct RadiusPacketContainer {
     packet: RadiusPacket,
-    remote_address: SocketAddr,
+    peer: RadiusPeer,
     metadata: HashMap<TypeId, Box<dyn RadiusPacketMetadata>>,
 }
 
 impl RadiusPacketContainer {
-    pub fn new(packet: RadiusPacket, remote_address: SocketAddr) -> Self {
+    pub fn new(packet: RadiusPacket, peer: RadiusPeer) -> Self {
         Self {
             packet,
-            remote_address,
+            peer,
             metadata: HashMap::new(),
         }
     }
@@ -23,8 +24,14 @@ impl RadiusPacketContainer {
         &self.packet
     }
 
+    pub fn peer(&self) -> &RadiusPeer {
+        &self.peer
+    }
+
     pub fn remote_address(&self) -> &SocketAddr {
-        &self.remote_address
+        match &self.peer {
+            RadiusPeer::Udp { remote_address } => remote_address,
+        }
     }
 
     pub fn has_metadata<T: RadiusPacketMetadata + 'static>(&self) -> bool {

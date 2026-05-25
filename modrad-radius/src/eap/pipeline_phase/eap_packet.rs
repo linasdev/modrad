@@ -73,6 +73,7 @@ mod tests {
     use crate::packet::RadiusPacket;
     use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
     use crate::packet::code::RadiusPacketCode;
+    use crate::peer::RadiusPeer;
     use googletest::prelude::*;
 
     #[test]
@@ -90,7 +91,9 @@ mod tests {
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 attributes,
             ),
-            "127.0.0.1:1234".parse().unwrap(),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
         );
 
         let mut target = EapPacketRadiusPipelinePhase::new();
@@ -125,7 +128,9 @@ mod tests {
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
-            "127.0.0.1:1234".parse().unwrap(),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
         );
 
         let mut target = EapPacketRadiusPipelinePhase::new();
