@@ -3,10 +3,9 @@ use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
 use crate::pipeline::metadata::RadiusPacketMetadata;
 use crate::pipeline_phase::RadiusPipelinePhase;
-use hmac::Hmac;
+use hmac::{Hmac, KeyInit, Mac};
 use log::info;
 use md5::Md5;
-use md5::digest::{KeyInit, Mac};
 use std::any::Any;
 
 #[derive(Default)]
