@@ -125,6 +125,12 @@ impl TryFrom<&[u8]> for RadiusPacket {
     }
 }
 
+impl From<TagLengthValueError> for RadiusPacketError {
+    fn from(error: TagLengthValueError) -> Self {
+        RadiusPacketError::TagLengthValue(error)
+    }
+}
+
 impl Debug for RadiusPacket {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RadiusPacket")
@@ -134,12 +140,6 @@ impl Debug for RadiusPacket {
             .field("authenticator", &self.authenticator)
             .field("attributes", &self.attributes)
             .finish()
-    }
-}
-
-impl From<TagLengthValueError> for RadiusPacketError {
-    fn from(error: TagLengthValueError) -> Self {
-        RadiusPacketError::TagLengthValue(error)
     }
 }
 
