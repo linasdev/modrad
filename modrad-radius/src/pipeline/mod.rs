@@ -3,7 +3,6 @@ use std::string::FromUtf8Error;
 
 pub mod container;
 pub mod metadata;
-pub mod phase;
 
 #[derive(Debug)]
 pub enum RadiusPipelineError {

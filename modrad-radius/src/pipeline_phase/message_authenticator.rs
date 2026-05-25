@@ -4,11 +4,11 @@ use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
-use crate::pipeline::phase::RadiusPipelinePhase;
 use log::info;
 use md5::digest::{KeyInit, Mac};
 use md5::Md5;
 use crate::pipeline::metadata::RadiusPacketMetadata;
+use crate::pipeline_phase::RadiusPipelinePhase;
 
 #[derive(Default)]
 pub struct MessageAuthenticatorRadiusPipelinePhase {

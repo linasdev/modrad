@@ -2,8 +2,8 @@ use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::RadiusPacketAttributeType;
 use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
-use crate::pipeline::phase::RadiusPipelinePhase;
 use log::{debug, info};
+use crate::pipeline_phase::RadiusPipelinePhase;
 
 #[derive(Default)]
 pub struct EapPacketRadiusPipelinePhase {}
