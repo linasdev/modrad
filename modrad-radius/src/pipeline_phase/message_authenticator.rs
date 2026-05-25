@@ -1,6 +1,5 @@
 use std::any::Any;
 use hmac::Hmac;
-use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
