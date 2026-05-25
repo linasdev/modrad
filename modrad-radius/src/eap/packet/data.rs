@@ -45,12 +45,8 @@ pub enum EapPacketTypeData {
 
 impl EapPacketData {
     pub fn length(&self) -> usize {
-        match self {
-            EapPacketData::Request { type_data } | EapPacketData::Response { type_data } => {
-                1 + type_data.length()
-            }
-            EapPacketData::Success | EapPacketData::Failure => 0,
-        }
+        self.type_data()
+            .map_or(0, |type_data| type_data.length() + 1)
     }
 
     pub fn code(&self) -> EapPacketCode {
@@ -59,6 +55,15 @@ impl EapPacketData {
             EapPacketData::Response { .. } => EapPacketCode::Response,
             EapPacketData::Success => EapPacketCode::Success,
             EapPacketData::Failure => EapPacketCode::Failure,
+        }
+    }
+
+    pub fn type_data(&self) -> Option<&EapPacketTypeData> {
+        match self {
+            EapPacketData::Request { type_data } | EapPacketData::Response { type_data } => {
+                Some(type_data)
+            }
+            EapPacketData::Success | EapPacketData::Failure => None,
         }
     }
 }
