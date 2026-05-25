@@ -1,12 +1,13 @@
 use crate::packet::RadiusPacket;
-use crate::pipeline::metadata::{RadiusPacketMetadata, RadiusPacketMetadataKey};
-use std::collections::BTreeMap;
+use crate::pipeline::metadata::RadiusPacketMetadata;
+use std::any::TypeId;
+use std::collections::HashMap;
 use std::net::SocketAddr;
 
 pub struct RadiusPacketContainer {
     packet: RadiusPacket,
     remote_address: SocketAddr,
-    metadata: BTreeMap<RadiusPacketMetadataKey, Box<dyn RadiusPacketMetadata>>,
+    metadata: HashMap<TypeId, Box<dyn RadiusPacketMetadata>>,
 }
 
 impl RadiusPacketContainer {
@@ -14,7 +15,7 @@ impl RadiusPacketContainer {
         Self {
             packet,
             remote_address,
-            metadata: BTreeMap::new(),
+            metadata: HashMap::new(),
         }
     }
 
@@ -26,26 +27,19 @@ impl RadiusPacketContainer {
         &self.remote_address
     }
 
-    pub fn has_metadata_key(&self, metadata_key: &RadiusPacketMetadataKey) -> bool {
-        self.metadata.contains_key(metadata_key)
+    pub fn has_metadata<T: RadiusPacketMetadata + 'static>(&self) -> bool {
+        self.metadata.contains_key(&TypeId::of::<T>())
     }
 
-    pub fn get_metadata<T: RadiusPacketMetadata + 'static>(
-        &self,
-        metadata_key: &RadiusPacketMetadataKey,
-    ) -> Option<&T> {
+    pub fn get_metadata<T: RadiusPacketMetadata + 'static>(&self) -> Option<&T> {
         self.metadata
-            .get(metadata_key)
+            .get(&TypeId::of::<T>())
             .and_then(|value| value.as_any().downcast_ref::<T>())
     }
 
-    pub fn set_metadata<T: RadiusPacketMetadata + 'static>(
-        &mut self,
-        metadata_key: RadiusPacketMetadataKey,
-        value: T,
-    ) -> Option<T> {
+    pub fn set_metadata<T: RadiusPacketMetadata + 'static>(&mut self, value: T) -> Option<T> {
         self.metadata
-            .insert(metadata_key, Box::new(value))
+            .insert(TypeId::of::<T>(), Box::new(value))
             .and_then(|old_value| old_value.into_any().downcast::<T>().ok())
             .map(|old_value| *old_value)
     }

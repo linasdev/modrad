@@ -2,7 +2,6 @@ use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::RadiusPacketAttributeType;
 use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
-use crate::pipeline::metadata::RadiusPacketMetadataKey;
 use crate::pipeline::phase::RadiusPipelinePhase;
 use log::{debug, info};
 
@@ -60,7 +59,7 @@ impl RadiusPipelinePhase for EapPacketRadiusPipelinePhase {
         };
 
         info!("Valid EAP-Message attribute(s) found in packet, adding EapPacket metadata");
-        packet_container.set_metadata(RadiusPacketMetadataKey::EapPacket, eap_packet);
+        packet_container.set_metadata(eap_packet);
 
         Ok(())
     }
@@ -97,9 +96,7 @@ mod tests {
         let mut target = EapPacketRadiusPipelinePhase::new();
         target.process(&mut container).unwrap();
 
-        let result = container
-            .get_metadata::<EapPacket>(&RadiusPacketMetadataKey::EapPacket)
-            .unwrap();
+        let result = container.get_metadata::<EapPacket>().unwrap();
 
         assert_that!(result.code(), eq(EapPacketCode::Response));
         assert_that!(result.identifier(), eq(220));
@@ -134,9 +131,6 @@ mod tests {
         let mut target = EapPacketRadiusPipelinePhase::new();
         target.process(&mut container).unwrap();
 
-        assert_that!(
-            container.has_metadata_key(&RadiusPacketMetadataKey::EapPacket),
-            is_false()
-        );
+        assert_that!(container.has_metadata::<EapPacket>(), is_false());
     }
 }
