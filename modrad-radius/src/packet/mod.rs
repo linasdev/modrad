@@ -14,6 +14,7 @@ pub enum RadiusPacketError {
     TagLengthValue(TagLengthValueError),
 }
 
+#[derive(Clone)]
 pub struct RadiusPacket {
     code: RadiusPacketCode,
     identifier: u8,

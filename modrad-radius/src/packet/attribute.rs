@@ -4,6 +4,7 @@ use std::fmt::Debug;
 
 pub type RadiusPacketAttribute = TagLengthValue<RadiusPacketAttributeType>;
 
+#[derive(Clone)]
 pub struct RadiusPacketAttributes {
     attributes: Vec<RadiusPacketAttribute>,
 }
@@ -82,6 +83,13 @@ impl RadiusPacketAttributes {
     pub fn get(&self, attribute_type: RadiusPacketAttributeType) -> Vec<&RadiusPacketAttribute> {
         self.attributes
             .iter()
+            .filter(|attribute| attribute.tag() == attribute_type)
+            .collect()
+    }
+
+    pub fn get_mut(&mut self, attribute_type: RadiusPacketAttributeType) -> Vec<&mut RadiusPacketAttribute> {
+        self.attributes
+            .iter_mut()
             .filter(|attribute| attribute.tag() == attribute_type)
             .collect()
     }
