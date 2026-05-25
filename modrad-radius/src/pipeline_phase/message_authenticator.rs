@@ -1,13 +1,13 @@
-use std::any::Any;
-use hmac::Hmac;
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::pipeline::RadiusPipelineError;
 use crate::pipeline::container::RadiusPacketContainer;
-use log::info;
-use md5::digest::{KeyInit, Mac};
-use md5::Md5;
 use crate::pipeline::metadata::RadiusPacketMetadata;
 use crate::pipeline_phase::RadiusPipelinePhase;
+use hmac::Hmac;
+use log::info;
+use md5::Md5;
+use md5::digest::{KeyInit, Mac};
+use std::any::Any;
 
 #[derive(Default)]
 pub struct MessageAuthenticatorRadiusPipelinePhase {
@@ -38,15 +38,21 @@ impl RadiusPipelinePhase for MessageAuthenticatorRadiusPipelinePhase {
 
         let attributes = packet_container.packet().attributes();
 
-        let message_authenticator = attributes.get(RadiusPacketAttributeType::MessageAuthenticator)
+        let message_authenticator = attributes
+            .get(RadiusPacketAttributeType::MessageAuthenticator)
             .first()
             .map(|attribute| attribute.value());
 
         if let Some(message_authenticator) = message_authenticator {
             let mut packet_for_hashing = packet_container.packet().clone();
-            let message_authenticator_attributes = packet_for_hashing.attributes_mut().get_mut(RadiusPacketAttributeType::MessageAuthenticator);
+            let message_authenticator_attributes = packet_for_hashing
+                .attributes_mut()
+                .get_mut(RadiusPacketAttributeType::MessageAuthenticator);
             for message_authenticator_attribute in message_authenticator_attributes {
-                *message_authenticator_attribute = RadiusPacketAttribute::from_tag_and_value(RadiusPacketAttributeType::MessageAuthenticator, vec![0; 16]);
+                *message_authenticator_attribute = RadiusPacketAttribute::from_tag_and_value(
+                    RadiusPacketAttributeType::MessageAuthenticator,
+                    vec![0; 16],
+                );
             }
             let packet_bytes: Vec<u8> = packet_for_hashing.into();
 
@@ -55,10 +61,14 @@ impl RadiusPipelinePhase for MessageAuthenticatorRadiusPipelinePhase {
             let expected_message_authenticator = mac.finalize().into_bytes().0;
 
             if message_authenticator == expected_message_authenticator {
-                info!("Valid Message-Authenticator attribute found in packet, adding MessageAuthenticatorStatus::Valid metadata");
+                info!(
+                    "Valid Message-Authenticator attribute found in packet, adding MessageAuthenticatorStatus::Valid metadata"
+                );
                 packet_container.set_metadata(MessageAuthenticatorStatus::Valid);
             } else {
-                info!("Invalid Message-Authenticator attribute found in packet, adding MessageAuthenticatorStatus::Invalid metadata");
+                info!(
+                    "Invalid Message-Authenticator attribute found in packet, adding MessageAuthenticatorStatus::Invalid metadata"
+                );
                 packet_container.set_metadata(MessageAuthenticatorStatus::Invalid);
             }
 
@@ -94,7 +104,8 @@ mod tests {
     use googletest::prelude::*;
 
     #[test]
-    fn should_add_message_authenticator_status_not_found_metadata_to_container_when_there_is_no_message_authenticator_attribute() {
+    fn should_add_message_authenticator_status_not_found_metadata_to_container_when_there_is_no_message_authenticator_attribute()
+     {
         let mut container = RadiusPacketContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -110,20 +121,22 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
         target.process(&mut container).unwrap();
 
-        let result = container.get_metadata::<MessageAuthenticatorStatus>().unwrap();
+        let result = container
+            .get_metadata::<MessageAuthenticatorStatus>()
+            .unwrap();
 
-        assert_that!(
-            result,
-            eq(&MessageAuthenticatorStatus::NotFound),
-        );
+        assert_that!(result, eq(&MessageAuthenticatorStatus::NotFound),);
     }
 
     #[test]
-    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_a_valid_message_authenticator_attribute() {
+    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_a_valid_message_authenticator_attribute()
+     {
         let mut attributes = RadiusPacketAttributes::new();
         attributes.push(RadiusPacketAttribute::from_tag_and_value(
             RadiusPacketAttributeType::MessageAuthenticator,
-            vec![184, 116, 44, 8, 53, 27, 50, 115, 163, 54, 94, 173, 149, 51, 12, 29],
+            vec![
+                184, 116, 44, 8, 53, 27, 50, 115, 163, 54, 94, 173, 149, 51, 12, 29,
+            ],
         ));
 
         let mut container = RadiusPacketContainer::new(
@@ -141,16 +154,16 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
         target.process(&mut container).unwrap();
 
-        let result = container.get_metadata::<MessageAuthenticatorStatus>().unwrap();
+        let result = container
+            .get_metadata::<MessageAuthenticatorStatus>()
+            .unwrap();
 
-        assert_that!(
-            result,
-            eq(&MessageAuthenticatorStatus::Valid),
-        );
+        assert_that!(result, eq(&MessageAuthenticatorStatus::Valid),);
     }
 
     #[test]
-    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_an_invalid_message_authenticator_attribute() {
+    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_an_invalid_message_authenticator_attribute()
+     {
         let mut attributes = RadiusPacketAttributes::new();
         attributes.push(RadiusPacketAttribute::from_tag_and_value(
             RadiusPacketAttributeType::MessageAuthenticator,
@@ -172,11 +185,10 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
         target.process(&mut container).unwrap();
 
-        let result = container.get_metadata::<MessageAuthenticatorStatus>().unwrap();
+        let result = container
+            .get_metadata::<MessageAuthenticatorStatus>()
+            .unwrap();
 
-        assert_that!(
-            result,
-            eq(&MessageAuthenticatorStatus::Invalid),
-        );
+        assert_that!(result, eq(&MessageAuthenticatorStatus::Invalid),);
     }
 }

@@ -87,7 +87,10 @@ impl RadiusPacketAttributes {
             .collect()
     }
 
-    pub fn get_mut(&mut self, attribute_type: RadiusPacketAttributeType) -> Vec<&mut RadiusPacketAttribute> {
+    pub fn get_mut(
+        &mut self,
+        attribute_type: RadiusPacketAttributeType,
+    ) -> Vec<&mut RadiusPacketAttribute> {
         self.attributes
             .iter_mut()
             .filter(|attribute| attribute.tag() == attribute_type)
