@@ -83,3 +83,100 @@ impl RadiusPacketMetadata for MessageAuthenticatorStatus {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::packet::RadiusPacket;
+    use crate::packet::attribute::RadiusPacketAttributes;
+    use crate::packet::code::RadiusPacketCode;
+    use crate::peer::RadiusPeer;
+    use googletest::prelude::*;
+
+    #[test]
+    fn should_add_message_authenticator_status_not_found_metadata_to_container_when_there_is_no_message_authenticator_attribute() {
+        let mut container = RadiusPacketContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0,
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                RadiusPacketAttributes::new(),
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
+        );
+
+        let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
+        target.process(&mut container).unwrap();
+
+        let result = container.get_metadata::<MessageAuthenticatorStatus>().unwrap();
+
+        assert_that!(
+            result,
+            eq(&MessageAuthenticatorStatus::NotFound),
+        );
+    }
+
+    #[test]
+    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_a_valid_message_authenticator_attribute() {
+        let mut attributes = RadiusPacketAttributes::new();
+        attributes.push(RadiusPacketAttribute::from_tag_and_value(
+            RadiusPacketAttributeType::MessageAuthenticator,
+            vec![184, 116, 44, 8, 53, 27, 50, 115, 163, 54, 94, 173, 149, 51, 12, 29],
+        ));
+
+        let mut container = RadiusPacketContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0,
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                attributes,
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
+        );
+
+        let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
+        target.process(&mut container).unwrap();
+
+        let result = container.get_metadata::<MessageAuthenticatorStatus>().unwrap();
+
+        assert_that!(
+            result,
+            eq(&MessageAuthenticatorStatus::Valid),
+        );
+    }
+
+    #[test]
+    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_an_invalid_message_authenticator_attribute() {
+        let mut attributes = RadiusPacketAttributes::new();
+        attributes.push(RadiusPacketAttribute::from_tag_and_value(
+            RadiusPacketAttributeType::MessageAuthenticator,
+            vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        ));
+
+        let mut container = RadiusPacketContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0,
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                attributes,
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
+        );
+
+        let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
+        target.process(&mut container).unwrap();
+
+        let result = container.get_metadata::<MessageAuthenticatorStatus>().unwrap();
+
+        assert_that!(
+            result,
+            eq(&MessageAuthenticatorStatus::Invalid),
+        );
+    }
+}
