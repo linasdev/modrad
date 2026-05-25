@@ -1,10 +1,10 @@
-pub struct UdpRadiusListenerConfig {
+pub struct UdpRadiusConnectorConfig {
     buffer_size: usize,
     address: String,
     port: u16,
 }
 
-impl UdpRadiusListenerConfig {
+impl UdpRadiusConnectorConfig {
     pub fn buffer_size(&self) -> usize {
         self.buffer_size
     }
@@ -33,7 +33,7 @@ impl UdpRadiusListenerConfig {
     }
 }
 
-impl Default for UdpRadiusListenerConfig {
+impl Default for UdpRadiusConnectorConfig {
     fn default() -> Self {
         Self {
             buffer_size: 4096,
