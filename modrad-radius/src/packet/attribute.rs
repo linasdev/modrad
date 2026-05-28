@@ -138,7 +138,7 @@ impl RadiusPacketAttributes {
         attribute_type: RadiusPacketAttributeType,
     ) -> Vec<RadiusPacketAttribute> {
         self.attributes
-            .extract_if(.., |attribute| attribute.tag() != attribute_type)
+            .extract_if(.., |attribute| attribute.tag() == attribute_type)
             .collect()
     }
 }
