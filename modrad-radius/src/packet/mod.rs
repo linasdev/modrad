@@ -58,6 +58,10 @@ impl RadiusPacket {
         &self.authenticator
     }
 
+    pub fn set_authenticator(&mut self, authenticator: &[u8; 16]) {
+        self.authenticator = *authenticator;
+    }
+
     pub fn attributes(&self) -> &RadiusPacketAttributes {
         &self.attributes
     }
