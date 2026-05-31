@@ -33,8 +33,8 @@ impl RadiusPacketInputContainer {
         &self.packet
     }
 
-    pub fn peer(&self) -> &RadiusPeer {
-        &self.peer
+    pub fn peer(&self) -> Arc<RadiusPeer> {
+        self.peer.clone()
     }
 
     pub fn remote_address(&self) -> &SocketAddr {
@@ -74,8 +74,12 @@ impl RadiusPacketOutputContainer {
         &mut self.packet
     }
 
-    pub fn peer(&self) -> &RadiusPeer {
-        &self.peer
+    pub fn into_packet(self) -> RadiusPacket {
+        self.packet
+    }
+
+    pub fn peer(&self) -> Arc<RadiusPeer> {
+        self.peer.clone()
     }
 }
 

@@ -2,7 +2,7 @@ use crate::connector::udp::config::UdpRadiusConnectorConfig;
 use crate::connector::{RadiusConnector, RadiusConnectorError};
 use async_trait::async_trait;
 use modrad_radius::packet::RadiusPacket;
-use modrad_radius::packet::container::RadiusPacketInputContainer;
+use modrad_radius::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use modrad_radius::peer::RadiusPeer;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -40,11 +40,10 @@ impl RadiusConnector for UdpRadiusConnector {
 
     async fn send(
         &self,
-        packet: RadiusPacket,
-        peer: &RadiusPeer,
+        output_container: RadiusPacketOutputContainer,
     ) -> Result<(), RadiusConnectorError> {
-        if let RadiusPeer::Udp { remote_address } = peer {
-            let buffer = Vec::from(packet);
+        if let RadiusPeer::Udp { remote_address } = output_container.peer().as_ref() {
+            let buffer = Vec::from(output_container.into_packet());
             self.socket.send_to(&buffer, remote_address).await?;
             return Ok(());
         }
