@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use modrad_radius::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use modrad_radius::packet::RadiusPacketError;
+use modrad_radius::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use std::net::AddrParseError;
 use tokio::io;
 
