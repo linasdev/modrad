@@ -5,6 +5,7 @@ use modrad_radius::packet::RadiusPacket;
 use modrad_radius::packet::container::RadiusPacketInputContainer;
 use modrad_radius::peer::RadiusPeer;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::net::UdpSocket;
 
 pub mod config;
@@ -32,7 +33,7 @@ impl RadiusConnector for UdpRadiusConnector {
         let mut buffer = vec![0u8; self.buffer_size];
         let (length, remote_address) = self.socket.recv_from(&mut buffer).await?;
         let packet = RadiusPacket::try_from(&buffer[..length])?;
-        let peer = RadiusPeer::Udp { remote_address };
+        let peer = Arc::new(RadiusPeer::Udp { remote_address });
 
         Ok(RadiusPacketInputContainer::new(packet, peer))
     }

@@ -16,10 +16,7 @@ where
 
     fn name(&self) -> String;
     fn phase_code(&self) -> Self::PhaseCode;
-    fn process(
-        &mut self,
-        target: T::Ref<'_>,
-    ) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
+    fn process(&mut self, target: T::Ref<'_>) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
 }
 
 pub trait RadiusPipelinePhaseCode: Ord + PartialOrd {

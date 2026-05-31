@@ -83,6 +83,7 @@ mod tests {
     use crate::packet::code::RadiusPacketCode;
     use crate::peer::RadiusPeer;
     use googletest::prelude::*;
+    use std::sync::Arc;
 
     #[test]
     fn should_add_eap_packet_metadata_to_container_from_eap_message_attribute() {
@@ -99,9 +100,9 @@ mod tests {
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 attributes,
             ),
-            RadiusPeer::Udp {
+            Arc::new(RadiusPeer::Udp {
                 remote_address: "127.0.0.1:1234".parse().unwrap(),
-            },
+            }),
         );
 
         let mut target = EapPacketRadiusInputPipelineStep::new();
@@ -136,9 +137,9 @@ mod tests {
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
-            RadiusPeer::Udp {
+            Arc::new(RadiusPeer::Udp {
                 remote_address: "127.0.0.1:1234".parse().unwrap(),
-            },
+            }),
         );
 
         let mut target = EapPacketRadiusInputPipelineStep::new();

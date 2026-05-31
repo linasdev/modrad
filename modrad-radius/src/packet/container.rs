@@ -6,21 +6,22 @@ use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 pub struct RadiusPacketInputContainer {
     packet: RadiusPacket,
-    peer: RadiusPeer,
+    peer: Arc<RadiusPeer>,
     metadata: HashMap<TypeId, Box<dyn RadiusPacketMetadata>>,
 }
 
 #[derive(Debug)]
 pub struct RadiusPacketOutputContainer {
     packet: RadiusPacket,
-    peer: RadiusPeer,
+    peer: Arc<RadiusPeer>,
 }
 
 impl RadiusPacketInputContainer {
-    pub fn new(packet: RadiusPacket, peer: RadiusPeer) -> Self {
+    pub fn new(packet: RadiusPacket, peer: Arc<RadiusPeer>) -> Self {
         Self {
             packet,
             peer,
@@ -37,7 +38,7 @@ impl RadiusPacketInputContainer {
     }
 
     pub fn remote_address(&self) -> &SocketAddr {
-        match &self.peer {
+        match self.peer.as_ref() {
             RadiusPeer::Udp { remote_address } => remote_address,
         }
     }
@@ -61,7 +62,7 @@ impl RadiusPacketInputContainer {
 }
 
 impl RadiusPacketOutputContainer {
-    pub fn new(packet: RadiusPacket, peer: RadiusPeer) -> Self {
+    pub fn new(packet: RadiusPacket, peer: Arc<RadiusPeer>) -> Self {
         Self { packet, peer }
     }
 
