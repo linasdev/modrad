@@ -1,7 +1,7 @@
 use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::mutability::{RadiusPipelineMutability, SharedRadiusPipeline};
-use crate::pipeline::{RadiusPipelineAcceptItem, RadiusPipelineStep, RadiusPipelineStepAction};
+use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction};
 
 pub mod message_authenticator;
 pub mod phase;
@@ -18,7 +18,12 @@ pub trait RadiusHandlerPipelineStep {
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, RadiusHandlerError>;
 }
 
-impl<S> RadiusPipelineStep<SharedRadiusPipeline, RadiusPacketInputContainer, RadiusPacketOutputContainer> for S
+impl<S>
+    RadiusPipelineStep<
+        SharedRadiusPipeline,
+        RadiusPacketInputContainer,
+        RadiusPacketOutputContainer,
+    > for S
 where
     S: RadiusHandlerPipelineStep,
 {
@@ -35,7 +40,10 @@ where
 
     fn process(
         &mut self,
-        target_item: <SharedRadiusPipeline as RadiusPipelineMutability>::Ref<'_, RadiusPacketInputContainer>,
+        target_item: <SharedRadiusPipeline as RadiusPipelineMutability>::Ref<
+            '_,
+            RadiusPacketInputContainer,
+        >,
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, Self::Error> {
         self.process(target_item)
     }

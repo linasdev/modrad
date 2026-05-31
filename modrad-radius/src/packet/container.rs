@@ -62,14 +62,15 @@ impl RadiusPacketInputContainer {
 
 impl RadiusPacketOutputContainer {
     pub fn new(packet: RadiusPacket, peer: RadiusPeer) -> Self {
-        Self {
-            packet,
-            peer,
-        }
+        Self { packet, peer }
     }
 
     pub fn packet(&self) -> &RadiusPacket {
         &self.packet
+    }
+
+    pub fn packet_mut(&mut self) -> &mut RadiusPacket {
+        &mut self.packet
     }
 
     pub fn peer(&self) -> &RadiusPeer {
@@ -88,6 +89,4 @@ impl Debug for RadiusPacketInputContainer {
 }
 
 impl RadiusPipelineTargetItem for RadiusPacketInputContainer {}
-
-impl RadiusPipelineTargetItem for RadiusPacketOutputContainer {}
 impl RadiusPipelineAcceptItem for RadiusPacketOutputContainer {}

@@ -1,7 +1,7 @@
-use crate::packet::RadiusPacket;
 use crate::packet::code::RadiusPacketCode;
-use crate::packet::container::RadiusPacketInputContainer;
-use crate::transformer::{RadiusPacketTransformer, RadiusPacketTransformerError};
+use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use crate::pipeline::output::phase::RadiusOutputPhaseCode;
+use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use md5::{Digest, Md5};
 
 #[derive(Default)]
@@ -17,12 +17,22 @@ impl ResponseAuthenticatorRadiusPacketTransformer {
     }
 }
 
-impl RadiusPacketTransformer for ResponseAuthenticatorRadiusPacketTransformer {
-    fn transform(
+impl RadiusOutputPipelineStep for ResponseAuthenticatorRadiusPacketTransformer {
+    fn name(&self) -> String {
+        "Sign".to_string()
+    }
+
+    fn phase_code(&self) -> RadiusOutputPhaseCode {
+        RadiusOutputPhaseCode::ResponseAuthenticator
+    }
+
+    fn process(
         &mut self,
-        packet: &mut RadiusPacket,
-        original_packet_container: &RadiusPacketInputContainer,
-    ) -> Result<(), RadiusPacketTransformerError> {
+        output_packet_container: &mut RadiusPacketOutputContainer,
+        input_packet_container: &RadiusPacketInputContainer,
+    ) -> Result<(), RadiusOutputError> {
+        let packet = output_packet_container.packet_mut();
+
         // RFC 2865 states:
         // The value of the Authenticator field in Access-Accept, Access-
         // Reject, and Access-Challenge packets is called the Response
@@ -38,7 +48,7 @@ impl RadiusPacketTransformer for ResponseAuthenticatorRadiusPacketTransformer {
             | RadiusPacketCode::AccessReject
             | RadiusPacketCode::AccessChallenge => {
                 let mut packet_clone = packet.clone();
-                packet_clone.set_authenticator(original_packet_container.packet().authenticator());
+                packet_clone.set_authenticator(input_packet_container.packet().authenticator());
 
                 let mut packet_bytes: Vec<u8> = packet_clone.into();
                 packet_bytes.extend_from_slice(self.secret.as_slice());
@@ -56,6 +66,7 @@ impl RadiusPacketTransformer for ResponseAuthenticatorRadiusPacketTransformer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::packet::RadiusPacket;
     use crate::packet::attribute::{
         RadiusPacketAttribute, RadiusPacketAttributeType, RadiusPacketAttributes,
     };
@@ -64,7 +75,7 @@ mod tests {
 
     #[test]
     fn should_not_add_response_authenticator_when_code_is_access_request() {
-        let original_container = RadiusPacketInputContainer::new(
+        let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -86,16 +97,24 @@ mod tests {
             b"user_password".to_vec(),
         ));
 
-        let mut packet = RadiusPacket::new(
-            RadiusPacketCode::AccessRequest,
-            0,
-            [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-            attributes,
+        let mut packet_output_container = RadiusPacketOutputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0,
+                [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                attributes,
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
         );
 
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
-        target.transform(&mut packet, &original_container).unwrap();
+        target
+            .process(&mut packet_output_container, &packet_input_container)
+            .unwrap();
 
+        let packet = packet_output_container.packet();
         assert_that!(
             packet.authenticator(),
             eq(&[16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]),
@@ -105,7 +124,7 @@ mod tests {
 
     #[test]
     fn should_add_response_authenticator_when_code_is_access_accept() {
-        let original_container = RadiusPacketInputContainer::new(
+        let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -127,16 +146,24 @@ mod tests {
             b"user_password".to_vec(),
         ));
 
-        let mut packet = RadiusPacket::new(
-            RadiusPacketCode::AccessAccept,
-            0,
-            [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-            attributes,
+        let mut packet_output_container = RadiusPacketOutputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessAccept,
+                0,
+                [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                attributes,
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
         );
 
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
-        target.transform(&mut packet, &original_container).unwrap();
+        target
+            .process(&mut packet_output_container, &packet_input_container)
+            .unwrap();
 
+        let packet = packet_output_container.packet();
         assert_that!(
             packet.authenticator(),
             eq(&[
@@ -148,7 +175,7 @@ mod tests {
 
     #[test]
     fn should_add_response_authenticator_when_code_is_access_reject() {
-        let original_container = RadiusPacketInputContainer::new(
+        let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -170,16 +197,24 @@ mod tests {
             b"user_password".to_vec(),
         ));
 
-        let mut packet = RadiusPacket::new(
-            RadiusPacketCode::AccessReject,
-            0,
-            [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-            attributes,
+        let mut packet_output_container = RadiusPacketOutputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessReject,
+                0,
+                [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                attributes,
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
         );
 
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
-        target.transform(&mut packet, &original_container).unwrap();
+        target
+            .process(&mut packet_output_container, &packet_input_container)
+            .unwrap();
 
+        let packet = packet_output_container.packet();
         assert_that!(
             packet.authenticator(),
             eq(&[
@@ -191,7 +226,7 @@ mod tests {
 
     #[test]
     fn should_add_response_authenticator_when_code_is_access_challenge() {
-        let original_container = RadiusPacketInputContainer::new(
+        let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -213,16 +248,24 @@ mod tests {
             b"user_password".to_vec(),
         ));
 
-        let mut packet = RadiusPacket::new(
-            RadiusPacketCode::AccessChallenge,
-            0,
-            [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-            attributes,
+        let mut packet_output_container = RadiusPacketOutputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessChallenge,
+                0,
+                [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                attributes,
+            ),
+            RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            },
         );
 
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
-        target.transform(&mut packet, &original_container).unwrap();
+        target
+            .process(&mut packet_output_container, &packet_input_container)
+            .unwrap();
 
+        let packet = packet_output_container.packet();
         assert_that!(
             packet.authenticator(),
             eq(&[

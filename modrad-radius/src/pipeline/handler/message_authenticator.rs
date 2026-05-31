@@ -1,9 +1,7 @@
 use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::RadiusPipelineStepAction;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
-use crate::pipeline::handler::{
-    RadiusHandlerError, RadiusHandlerPipelineStep,
-};
+use crate::pipeline::handler::{RadiusHandlerError, RadiusHandlerPipelineStep};
 use crate::pipeline::input::message_authenticator::MessageAuthenticatorStatus;
 use log::info;
 
