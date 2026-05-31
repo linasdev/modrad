@@ -1,6 +1,6 @@
 use crate::tag_length_value::TagLengthValue;
 use modrad_macros::define_byte_enum;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 
 pub type RadiusPacketAttribute = TagLengthValue<RadiusPacketAttributeType>;
 
@@ -144,7 +144,7 @@ impl RadiusPacketAttributes {
 }
 
 impl Debug for RadiusPacketAttributes {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut debug_map = f.debug_map();
 
         for attribute in self.attributes.iter() {
