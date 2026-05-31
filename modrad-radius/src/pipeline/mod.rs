@@ -39,6 +39,7 @@ where
     T: RadiusPipelineTarget,
     A: RadiusPipelineAcceptItem,
 {
+    name: String,
     phases_by_code: BTreeMap<P, RadiusPipelinePhase<P, T, A, E>>,
 }
 
@@ -64,8 +65,9 @@ where
     T: RadiusPipelineTarget,
     A: RadiusPipelineAcceptItem,
 {
-    pub fn new() -> Self {
+    pub fn new(name: &str) -> Self {
         Self {
+            name: name.to_string(),
             phases_by_code: BTreeMap::new(),
         }
     }
@@ -94,12 +96,19 @@ where
     }
 
     pub fn process(&mut self, mut target: T::Ref<'_>) -> Result<Option<A>, E> {
+        info!("Processing pipeline {}", self.name.as_str());
+
         for (phase_code, stage) in self.phases_by_code.iter_mut() {
-            info!("Processing pipeline phase {}", phase_code.name());
+            info!(
+                "Processing pipeline phase {}/{}",
+                self.name.as_str(),
+                phase_code.name()
+            );
 
             for (_, pipeline_step) in stage.steps_by_type.iter_mut() {
                 info!(
-                    "Processing pipeline step {}/{}",
+                    "Processing pipeline step {}/{}/{}",
+                    self.name.as_str(),
                     phase_code.name(),
                     pipeline_step.name()
                 );
