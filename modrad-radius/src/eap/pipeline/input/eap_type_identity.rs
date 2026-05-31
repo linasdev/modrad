@@ -27,7 +27,7 @@ impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
     }
 
     fn phase_code(&self) -> RadiusInputPhaseCode {
-        todo!()
+        RadiusInputPhaseCode::EapType
     }
 
     fn process(

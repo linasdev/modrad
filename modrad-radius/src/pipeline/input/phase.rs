@@ -3,16 +3,16 @@ use std::cmp::Ordering;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord)]
 pub enum RadiusInputPhaseCode {
-    Radius,
-    Eap,
+    RadiusAttribute,
+    EapType,
     Other(usize),
 }
 
 impl RadiusInputPhaseCode {
     fn position(&self) -> isize {
         match self {
-            RadiusInputPhaseCode::Radius => isize::MIN + 0,
-            RadiusInputPhaseCode::Eap => isize::MIN + 1,
+            RadiusInputPhaseCode::RadiusAttribute => isize::MIN + 0,
+            RadiusInputPhaseCode::EapType => isize::MIN + 1,
             RadiusInputPhaseCode::Other(code) => *code as isize,
         }
     }
@@ -21,8 +21,8 @@ impl RadiusInputPhaseCode {
 impl RadiusPipelinePhaseCode for RadiusInputPhaseCode {
     fn name(&self) -> String {
         match self {
-            RadiusInputPhaseCode::Radius => "RADIUS".to_string(),
-            RadiusInputPhaseCode::Eap => "EAP".to_string(),
+            RadiusInputPhaseCode::RadiusAttribute => "RADIUS_ATTRIBUTE".to_string(),
+            RadiusInputPhaseCode::EapType => "EAP_TYPE".to_string(),
             RadiusInputPhaseCode::Other(code) => format!("OTHER ({code})"),
         }
     }

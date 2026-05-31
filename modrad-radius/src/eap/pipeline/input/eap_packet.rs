@@ -20,7 +20,7 @@ impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
     }
 
     fn phase_code(&self) -> RadiusInputPhaseCode {
-        RadiusInputPhaseCode::Eap
+        RadiusInputPhaseCode::RadiusAttribute
     }
 
     fn process(
