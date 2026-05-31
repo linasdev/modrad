@@ -36,7 +36,7 @@ impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
     ) -> Result<(), RadiusInputError> {
         if let Some(eap_packet) = packet_container.get_metadata::<EapPacket>() {
             if let Some(EapPacketTypeData::Identity(buffer)) = eap_packet.data().type_data() {
-                info!("EapPacket is of type Identity, processing pipeline phase");
+                info!("EapPacket is of type Identity, processing pipeline step");
 
                 if let Ok(user_name) = String::from_utf8(buffer.clone()) {
                     info!(
@@ -46,17 +46,17 @@ impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
                     Ok(())
                 } else {
                     info!(
-                        "Identity type data contains no valid identity, skipping pipeline phase processing"
+                        "Identity type data contains no valid identity, skipping pipeline step processing"
                     );
                     Ok(())
                 }
             } else {
-                debug!("EapPacket is not of type Identity, skipping pipeline phase processing");
+                debug!("EapPacket is not of type Identity, skipping pipeline step processing");
                 Ok(())
             }
         } else {
             debug!(
-                "No EapPacket metadata found in packet container, skipping pipeline phase processing"
+                "No EapPacket metadata found in packet container, skipping pipeline step processing"
             );
             Ok(())
         }
