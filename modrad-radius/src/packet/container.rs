@@ -1,7 +1,7 @@
 use crate::packet::RadiusPacket;
 use crate::packet::metadata::RadiusPacketMetadata;
 use crate::peer::RadiusPeer;
-use crate::pipeline::{RadiusPipelineAcceptItem, RadiusPipelineTargetItem};
+use crate::pipeline::RadiusPipelineAcceptItem;
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -88,5 +88,4 @@ impl Debug for RadiusPacketInputContainer {
     }
 }
 
-impl RadiusPipelineTargetItem for RadiusPacketInputContainer {}
 impl RadiusPipelineAcceptItem for RadiusPacketOutputContainer {}

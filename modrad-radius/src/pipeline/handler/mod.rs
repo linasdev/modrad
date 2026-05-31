@@ -1,13 +1,14 @@
 use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
-use crate::pipeline::mutability::{RadiusPipelineMutability, SharedRadiusPipeline};
-use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction};
+use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 
 pub mod message_authenticator;
 pub mod phase;
 
 #[derive(Debug)]
 pub enum RadiusHandlerError {}
+
+pub struct RadiusHandlerPipelineTarget;
 
 pub trait RadiusHandlerPipelineStep {
     fn name(&self) -> String;
@@ -18,12 +19,7 @@ pub trait RadiusHandlerPipelineStep {
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, RadiusHandlerError>;
 }
 
-impl<S>
-    RadiusPipelineStep<
-        SharedRadiusPipeline,
-        RadiusPacketInputContainer,
-        RadiusPacketOutputContainer,
-    > for S
+impl<S> RadiusPipelineStep<RadiusHandlerPipelineTarget, RadiusPacketOutputContainer> for S
 where
     S: RadiusHandlerPipelineStep,
 {
@@ -40,11 +36,19 @@ where
 
     fn process(
         &mut self,
-        target_item: <SharedRadiusPipeline as RadiusPipelineMutability>::Ref<
-            '_,
-            RadiusPacketInputContainer,
-        >,
+        target: <RadiusHandlerPipelineTarget as RadiusPipelineTarget>::Ref<'_>,
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, Self::Error> {
-        self.process(target_item)
+        self.process(target)
+    }
+}
+
+impl RadiusPipelineTarget for RadiusHandlerPipelineTarget {
+    type Ref<'t> = &'t RadiusPacketInputContainer;
+
+    fn reborrow<'t1, 't2>(t: &'t1 mut Self::Ref<'t2>) -> Self::Ref<'t1>
+    where
+        't2: 't1,
+    {
+        *t
     }
 }

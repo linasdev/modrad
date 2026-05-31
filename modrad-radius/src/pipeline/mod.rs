@@ -1,17 +1,14 @@
-use crate::pipeline::mutability::RadiusPipelineMutability;
 use log::info;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 
 pub mod handler;
 pub mod input;
-pub mod mutability;
 pub mod output;
 
-pub trait RadiusPipelineStep<M, T, A>
+pub trait RadiusPipelineStep<T, A>
 where
-    M: RadiusPipelineMutability,
-    T: RadiusPipelineTargetItem,
+    T: RadiusPipelineTarget,
     A: RadiusPipelineAcceptItem,
 {
     type Error;
@@ -21,7 +18,7 @@ where
     fn phase_code(&self) -> Self::PhaseCode;
     fn process(
         &mut self,
-        target_item: M::Ref<'_, T>,
+        target: T::Ref<'_>,
     ) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
 }
 
@@ -31,26 +28,30 @@ pub trait RadiusPipelinePhaseCode: Ord + PartialOrd {
 
 pub trait RadiusPipelineAcceptItem {}
 
-pub trait RadiusPipelineTargetItem {}
+pub trait RadiusPipelineTarget {
+    type Ref<'t>;
 
-pub struct RadiusPipeline<M, P, T, A, E>
-where
-    M: RadiusPipelineMutability,
-    P: RadiusPipelinePhaseCode,
-    T: RadiusPipelineTargetItem,
-    A: RadiusPipelineAcceptItem,
-{
-    phases_by_code: BTreeMap<P, RadiusPipelinePhase<M, P, T, A, E>>,
+    fn reborrow<'t1, 't2>(t: &'t1 mut Self::Ref<'t2>) -> Self::Ref<'t1>
+    where
+        't2: 't1;
 }
 
-pub struct RadiusPipelinePhase<M, P, T, A, E>
+pub struct RadiusPipeline<P, T, A, E>
 where
-    M: RadiusPipelineMutability,
     P: RadiusPipelinePhaseCode,
-    T: RadiusPipelineTargetItem,
+    T: RadiusPipelineTarget,
     A: RadiusPipelineAcceptItem,
 {
-    steps_by_type: BTreeMap<TypeId, Box<dyn RadiusPipelineStep<M, T, A, Error = E, PhaseCode = P>>>,
+    phases_by_code: BTreeMap<P, RadiusPipelinePhase<P, T, A, E>>,
+}
+
+pub struct RadiusPipelinePhase<P, T, A, E>
+where
+    P: RadiusPipelinePhaseCode,
+    T: RadiusPipelineTarget,
+    A: RadiusPipelineAcceptItem,
+{
+    steps_by_type: BTreeMap<TypeId, Box<dyn RadiusPipelineStep<T, A, Error = E, PhaseCode = P>>>,
 }
 
 #[derive(Debug)]
@@ -60,11 +61,10 @@ pub enum RadiusPipelineStepAction<A> {
     AcceptStep(A),
 }
 
-impl<M, P, T, A, E> RadiusPipeline<M, P, T, A, E>
+impl<P, T, A, E> RadiusPipeline<P, T, A, E>
 where
-    M: RadiusPipelineMutability,
     P: RadiusPipelinePhaseCode,
-    T: RadiusPipelineTargetItem,
+    T: RadiusPipelineTarget,
     A: RadiusPipelineAcceptItem,
 {
     pub fn new() -> Self {
@@ -73,7 +73,7 @@ where
         }
     }
 
-    pub fn insert_step<S: RadiusPipelineStep<M, T, A, Error = E, PhaseCode = P> + 'static>(
+    pub fn insert_step<S: RadiusPipelineStep<T, A, Error = E, PhaseCode = P> + 'static>(
         &mut self,
         pipeline_step: S,
     ) -> Result<&mut Self, S> {
@@ -96,7 +96,7 @@ where
         }
     }
 
-    pub fn process(&mut self, mut target_item: M::Ref<'_, T>) -> Result<Option<A>, E> {
+    pub fn process(&mut self, mut target: T::Ref<'_>) -> Result<Option<A>, E> {
         for (phase_code, stage) in self.phases_by_code.iter_mut() {
             info!("Processing pipeline phase {}", phase_code.name());
 
@@ -107,8 +107,8 @@ where
                     pipeline_step.name()
                 );
 
-                let current_target_item = M::reborrow(&mut target_item);
-                match pipeline_step.process(current_target_item)? {
+                let current_target = T::reborrow(&mut target);
+                match pipeline_step.process(current_target)? {
                     RadiusPipelineStepAction::AcceptStep(accept_item) => {
                         info!("Final pipeline action is AcceptStep(A), returning Some(A)");
                         return Ok(Some(accept_item));

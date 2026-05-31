@@ -1,7 +1,6 @@
 use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
-use crate::pipeline::mutability::{MutatingRadiusPipeline, RadiusPipelineMutability};
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
-use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTargetItem};
+use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 
 pub mod message_authenticator;
 pub mod phase;
@@ -9,6 +8,8 @@ pub mod response_authenticator;
 
 #[derive(Debug)]
 pub enum RadiusOutputError {}
+
+pub struct RadiusOutputPipelineTarget;
 
 pub trait RadiusOutputPipelineStep {
     fn name(&self) -> String;
@@ -20,15 +21,7 @@ pub trait RadiusOutputPipelineStep {
     ) -> Result<(), RadiusOutputError>;
 }
 
-impl<S>
-    RadiusPipelineStep<
-        MutatingRadiusPipeline,
-        (
-            &mut RadiusPacketOutputContainer,
-            &RadiusPacketInputContainer,
-        ),
-        (),
-    > for S
+impl<S> RadiusPipelineStep<RadiusOutputPipelineTarget, ()> for S
 where
     S: RadiusOutputPipelineStep,
 {
@@ -45,24 +38,23 @@ where
 
     fn process(
         &mut self,
-        target_item: <MutatingRadiusPipeline as RadiusPipelineMutability>::Ref<
-            '_,
-            (
-                &mut RadiusPacketOutputContainer,
-                &RadiusPacketInputContainer,
-            ),
-        >,
+        target: <RadiusOutputPipelineTarget as RadiusPipelineTarget>::Ref<'_>,
     ) -> Result<RadiusPipelineStepAction<()>, Self::Error> {
-        let (output_packet_container, input_packet_container) = target_item;
-        self.process(output_packet_container, input_packet_container)?;
+        self.process(target.0, target.1)?;
         Ok(RadiusPipelineStepAction::NextStep)
     }
 }
 
-impl RadiusPipelineTargetItem
-    for (
-        &mut RadiusPacketOutputContainer,
-        &RadiusPacketInputContainer,
-    )
-{
+impl RadiusPipelineTarget for RadiusOutputPipelineTarget {
+    type Ref<'t> = (
+        &'t mut RadiusPacketOutputContainer,
+        &'t RadiusPacketInputContainer,
+    );
+
+    fn reborrow<'t1, 't2>(t: &'t1 mut Self::Ref<'t2>) -> Self::Ref<'t1>
+    where
+        't2: 't1,
+    {
+        (t.0, t.1)
+    }
 }

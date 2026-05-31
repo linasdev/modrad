@@ -1,8 +1,7 @@
 use crate::eap::packet::EapPacketError;
 use crate::packet::container::RadiusPacketInputContainer;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
-use crate::pipeline::mutability::{MutatingRadiusPipeline, RadiusPipelineMutability};
-use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction};
+use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 use std::string::FromUtf8Error;
 
 pub mod message_authenticator;
@@ -14,6 +13,8 @@ pub enum RadiusInputError {
     FromUtf8(FromUtf8Error),
 }
 
+pub struct RadiusInputPipelineTarget;
+
 pub trait RadiusInputPipelineStep {
     fn name(&self) -> String;
     fn phase_code(&self) -> RadiusInputPhaseCode;
@@ -23,7 +24,7 @@ pub trait RadiusInputPipelineStep {
     ) -> Result<(), RadiusInputError>;
 }
 
-impl<S> RadiusPipelineStep<MutatingRadiusPipeline, RadiusPacketInputContainer, ()> for S
+impl<S> RadiusPipelineStep<RadiusInputPipelineTarget, ()> for S
 where
     S: RadiusInputPipelineStep,
 {
@@ -40,12 +41,9 @@ where
 
     fn process(
         &mut self,
-        target_item: <MutatingRadiusPipeline as RadiusPipelineMutability>::Ref<
-            '_,
-            RadiusPacketInputContainer,
-        >,
+        target: <RadiusInputPipelineTarget as RadiusPipelineTarget>::Ref<'_>,
     ) -> Result<RadiusPipelineStepAction<()>, Self::Error> {
-        self.process(target_item)?;
+        self.process(target)?;
         Ok(RadiusPipelineStepAction::NextStep)
     }
 }
@@ -59,5 +57,16 @@ impl From<EapPacketError> for RadiusInputError {
 impl From<FromUtf8Error> for RadiusInputError {
     fn from(error: FromUtf8Error) -> Self {
         RadiusInputError::FromUtf8(error)
+    }
+}
+
+impl RadiusPipelineTarget for RadiusInputPipelineTarget {
+    type Ref<'t> = &'t mut RadiusPacketInputContainer;
+
+    fn reborrow<'t1, 't2>(t: &'t1 mut Self::Ref<'t2>) -> Self::Ref<'t1>
+    where
+        't2: 't1,
+    {
+        *t
     }
 }
