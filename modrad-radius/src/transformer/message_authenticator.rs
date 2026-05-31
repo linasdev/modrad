@@ -1,7 +1,7 @@
 use crate::packet::RadiusPacket;
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::packet::code::RadiusPacketCode;
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketInputContainer;
 use crate::transformer::{RadiusPacketTransformer, RadiusPacketTransformerError};
 use hmac::{Hmac, KeyInit, Mac};
 use md5::Md5;
@@ -23,7 +23,7 @@ impl RadiusPacketTransformer for MessageAuthenticatorRadiusPacketTransformer {
     fn transform(
         &mut self,
         packet: &mut RadiusPacket,
-        original_container: &RadiusPacketContainer,
+        original_container: &RadiusPacketInputContainer,
     ) -> Result<(), RadiusPacketTransformerError> {
         {
             let attributes = packet.attributes_mut();
@@ -80,7 +80,7 @@ mod tests {
 
     #[test]
     fn should_add_message_authenticator_attribute_when_code_is_access_request() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -131,7 +131,7 @@ mod tests {
 
     #[test]
     fn should_add_message_authenticator_attribute_when_code_is_access_challenge() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -182,7 +182,7 @@ mod tests {
 
     #[test]
     fn should_add_message_authenticator_attribute_when_code_is_access_accept() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn should_add_message_authenticator_attribute_when_code_is_access_reject() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,

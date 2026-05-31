@@ -7,20 +7,20 @@ pub mod handler;
 pub mod input;
 pub mod mutability;
 
-pub trait RadiusPipelineStep<M, A>
+pub trait RadiusPipelineStep<M, T, A>
 where
     M: RadiusPipelineMutability,
+    T: RadiusPipelineTargetItem,
     A: RadiusPipelineAcceptItem,
 {
     type Error;
     type PhaseCode: RadiusPipelinePhaseCode;
-    type TargetItem: RadiusPipelineTargetItem;
 
     fn name(&self) -> String;
     fn phase_code(&self) -> Self::PhaseCode;
     fn process(
         &mut self,
-        target_item: M::Ref<'_, Self::TargetItem>,
+        target_item: M::Ref<'_, T>,
     ) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
 }
 
@@ -51,7 +51,7 @@ where
 {
     steps_by_type: BTreeMap<
         TypeId,
-        Box<dyn RadiusPipelineStep<M, A, Error = E, PhaseCode = P, TargetItem = T>>,
+        Box<dyn RadiusPipelineStep<M, T, A, Error = E, PhaseCode = P>>,
     >,
 }
 
@@ -76,7 +76,7 @@ where
     }
 
     pub fn insert_step<
-        S: RadiusPipelineStep<M, A, Error = E, PhaseCode = P, TargetItem = T> + 'static,
+        S: RadiusPipelineStep<M, T, A, Error = E, PhaseCode = P> + 'static,
     >(
         &mut self,
         pipeline_step: S,
@@ -127,3 +127,5 @@ where
         Ok(None)
     }
 }
+
+impl RadiusPipelineAcceptItem for () {}

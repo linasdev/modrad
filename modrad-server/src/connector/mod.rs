@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use modrad_radius::packet::container::RadiusPacketContainer;
+use modrad_radius::packet::container::RadiusPacketInputContainer;
 use modrad_radius::packet::{RadiusPacket, RadiusPacketError};
 use modrad_radius::peer::RadiusPeer;
 use std::net::AddrParseError;
@@ -17,7 +17,7 @@ pub enum RadiusConnectorError {
 
 #[async_trait]
 pub trait RadiusConnector {
-    async fn recv(&self) -> Result<RadiusPacketContainer, RadiusConnectorError>;
+    async fn recv(&self) -> Result<RadiusPacketInputContainer, RadiusConnectorError>;
     async fn send(
         &self,
         packet: RadiusPacket,

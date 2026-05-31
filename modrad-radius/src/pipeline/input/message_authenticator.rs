@@ -1,5 +1,5 @@
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketInputContainer;
 use crate::packet::metadata::RadiusPacketMetadata;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
@@ -39,7 +39,7 @@ impl RadiusInputPipelineStep for MessageAuthenticatorRadiusInputPipelineStep {
 
     fn process(
         &mut self,
-        packet_container: &mut RadiusPacketContainer,
+        packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
         let attributes = packet_container.packet().attributes();
 
@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn should_add_message_authenticator_status_not_found_metadata_to_container_when_there_is_no_message_authenticator_attribute()
      {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -144,7 +144,7 @@ mod tests {
             ],
         ));
 
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -175,7 +175,7 @@ mod tests {
             vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         ));
 
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,

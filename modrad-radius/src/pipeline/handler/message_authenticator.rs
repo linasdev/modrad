@@ -1,8 +1,8 @@
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::RadiusPipelineStepAction;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::handler::{
-    RadiusHandlerError, RadiusHandlerPipelineStep, RadiusPacketWithDestination,
+    RadiusHandlerError, RadiusHandlerPipelineStep,
 };
 use crate::pipeline::input::message_authenticator::MessageAuthenticatorStatus;
 use log::info;
@@ -26,8 +26,8 @@ impl RadiusHandlerPipelineStep for MessageAuthenticatorRadiusHandlerPipelineStep
 
     fn process(
         &mut self,
-        packet_container: &RadiusPacketContainer,
-    ) -> Result<RadiusPipelineStepAction<RadiusPacketWithDestination>, RadiusHandlerError> {
+        packet_container: &RadiusPacketInputContainer,
+    ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, RadiusHandlerError> {
         match packet_container.get_metadata::<MessageAuthenticatorStatus>() {
             Some(MessageAuthenticatorStatus::Valid) => {
                 info!(
@@ -60,7 +60,7 @@ mod tests {
 
     #[test]
     fn should_return_next_step_when_message_authenticator_valid_metadata_exists() {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn should_return_discard_packet_when_message_authenticator_invalid_metadata_exists() {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn should_return_next_step_when_message_authenticator_not_found_metadata_exists() {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn should_return_next_step_when_message_authenticator_metadata_does_not_exist() {
-        let container = RadiusPacketContainer::new(
+        let container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,

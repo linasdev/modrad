@@ -1,6 +1,6 @@
 use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::RadiusPacketAttributeType;
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketInputContainer;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use log::{debug, info};
@@ -25,7 +25,7 @@ impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
 
     fn process(
         &mut self,
-        packet_container: &mut RadiusPacketContainer,
+        packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
         let attributes = packet_container.packet().attributes();
 
@@ -92,7 +92,7 @@ mod tests {
             vec![2, 220, 0, 13, 1, 106, 111, 104, 110, 95, 100, 111, 101],
         ));
 
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_message_attribute() {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,

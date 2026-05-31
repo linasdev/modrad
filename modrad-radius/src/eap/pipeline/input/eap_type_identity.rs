@@ -1,6 +1,6 @@
 use crate::eap::packet::EapPacket;
 use crate::eap::packet::data::EapPacketTypeData;
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketInputContainer;
 use crate::packet::metadata::RadiusPacketMetadata;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
@@ -32,7 +32,7 @@ impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
 
     fn process(
         &mut self,
-        packet_container: &mut RadiusPacketContainer,
+        packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
         if let Some(eap_packet) = packet_container.get_metadata::<EapPacket>() {
             if let Some(EapPacketTypeData::Identity(buffer)) = eap_packet.data().type_data() {
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn should_add_eap_type_data_identity_metadata_to_container_from_eap_packet_metadata() {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn should_not_add_eap_type_data_identity_metadata_to_container_when_there_is_no_eap_packet_metadata()
      {
-        let mut container = RadiusPacketContainer::new(
+        let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,

@@ -1,19 +1,25 @@
 use crate::packet::RadiusPacket;
 use crate::packet::metadata::RadiusPacketMetadata;
 use crate::peer::RadiusPeer;
-use crate::pipeline::RadiusPipelineTargetItem;
+use crate::pipeline::{RadiusPipelineAcceptItem, RadiusPipelineTargetItem};
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::net::SocketAddr;
 
-pub struct RadiusPacketContainer {
+pub struct RadiusPacketInputContainer {
     packet: RadiusPacket,
     peer: RadiusPeer,
     metadata: HashMap<TypeId, Box<dyn RadiusPacketMetadata>>,
 }
 
-impl RadiusPacketContainer {
+#[derive(Debug)]
+pub struct RadiusPacketOutputContainer {
+    packet: RadiusPacket,
+    peer: RadiusPeer,
+}
+
+impl RadiusPacketInputContainer {
     pub fn new(packet: RadiusPacket, peer: RadiusPeer) -> Self {
         Self {
             packet,
@@ -54,7 +60,24 @@ impl RadiusPacketContainer {
     }
 }
 
-impl Debug for RadiusPacketContainer {
+impl RadiusPacketOutputContainer {
+    pub fn new(packet: RadiusPacket, peer: RadiusPeer) -> Self {
+        Self {
+            packet,
+            peer,
+        }
+    }
+
+    pub fn packet(&self) -> &RadiusPacket {
+        &self.packet
+    }
+
+    pub fn peer(&self) -> &RadiusPeer {
+        &self.peer
+    }
+}
+
+impl Debug for RadiusPacketInputContainer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RadiusPacketContainer")
             .field("packet", &self.packet)
@@ -64,4 +87,7 @@ impl Debug for RadiusPacketContainer {
     }
 }
 
-impl RadiusPipelineTargetItem for RadiusPacketContainer {}
+impl RadiusPipelineTargetItem for RadiusPacketInputContainer {}
+
+impl RadiusPipelineTargetItem for RadiusPacketOutputContainer {}
+impl RadiusPipelineAcceptItem for RadiusPacketOutputContainer {}

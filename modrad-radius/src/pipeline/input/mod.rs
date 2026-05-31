@@ -1,8 +1,8 @@
 use crate::eap::packet::EapPacketError;
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketInputContainer;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::mutability::{MutatingRadiusPipeline, RadiusPipelineMutability};
-use crate::pipeline::{RadiusPipelineAcceptItem, RadiusPipelineStep, RadiusPipelineStepAction};
+use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction};
 use std::string::FromUtf8Error;
 
 pub mod message_authenticator;
@@ -19,17 +19,16 @@ pub trait RadiusInputPipelineStep {
     fn phase_code(&self) -> RadiusInputPhaseCode;
     fn process(
         &mut self,
-        packet_container: &mut RadiusPacketContainer,
+        packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError>;
 }
 
-impl<S> RadiusPipelineStep<MutatingRadiusPipeline, ()> for S
+impl<S> RadiusPipelineStep<MutatingRadiusPipeline, RadiusPacketInputContainer, ()> for S
 where
     S: RadiusInputPipelineStep,
 {
     type Error = RadiusInputError;
     type PhaseCode = RadiusInputPhaseCode;
-    type TargetItem = RadiusPacketContainer;
 
     fn name(&self) -> String {
         self.name()
@@ -43,15 +42,13 @@ where
         &mut self,
         target_item: <MutatingRadiusPipeline as RadiusPipelineMutability>::Ref<
             '_,
-            Self::TargetItem,
+            RadiusPacketInputContainer,
         >,
     ) -> Result<RadiusPipelineStepAction<()>, Self::Error> {
         self.process(target_item)?;
         Ok(RadiusPipelineStepAction::NextStep)
     }
 }
-
-impl RadiusPipelineAcceptItem for () {}
 
 impl From<EapPacketError> for RadiusInputError {
     fn from(error: EapPacketError) -> Self {

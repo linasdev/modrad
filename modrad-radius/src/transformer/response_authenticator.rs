@@ -1,6 +1,6 @@
 use crate::packet::RadiusPacket;
 use crate::packet::code::RadiusPacketCode;
-use crate::packet::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketInputContainer;
 use crate::transformer::{RadiusPacketTransformer, RadiusPacketTransformerError};
 use md5::{Digest, Md5};
 
@@ -21,7 +21,7 @@ impl RadiusPacketTransformer for ResponseAuthenticatorRadiusPacketTransformer {
     fn transform(
         &mut self,
         packet: &mut RadiusPacket,
-        original_packet_container: &RadiusPacketContainer,
+        original_packet_container: &RadiusPacketInputContainer,
     ) -> Result<(), RadiusPacketTransformerError> {
         // RFC 2865 states:
         // The value of the Authenticator field in Access-Accept, Access-
@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn should_not_add_response_authenticator_when_code_is_access_request() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn should_add_response_authenticator_when_code_is_access_accept() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn should_add_response_authenticator_when_code_is_access_reject() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn should_add_response_authenticator_when_code_is_access_challenge() {
-        let original_container = RadiusPacketContainer::new(
+        let original_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
                 0,
