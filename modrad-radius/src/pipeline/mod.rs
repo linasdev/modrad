@@ -105,7 +105,7 @@ where
             info!("Processing pipeline phase {}", phase_code.name());
 
             for (_, pipeline_step) in stage.steps_by_type.iter_mut() {
-                info!("Processing pipeline step {}", pipeline_step.name());
+                info!("Processing pipeline step {}/{}", phase_code.name(), pipeline_step.name());
 
                 let current_target_item = M::reborrow(&mut target_item);
                 match pipeline_step.process(current_target_item)? {

@@ -23,7 +23,7 @@ impl EapTypeIdentityRadiusInputPipelineStep {
 
 impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
     fn name(&self) -> String {
-        "EAP-Message/Identity".to_string()
+        "Identity".to_string()
     }
 
     fn phase_code(&self) -> RadiusInputPhaseCode {
