@@ -122,6 +122,8 @@ where
             }
         }
 
+        info!("No pipeline step returned a final action, returning None");
+
         Ok(None)
     }
 }
