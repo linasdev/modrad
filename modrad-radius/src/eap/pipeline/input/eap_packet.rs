@@ -1,32 +1,40 @@
 use crate::eap::packet::{EapPacket, EapPacketError};
 use crate::packet::attribute::RadiusPacketAttributeType;
-use crate::pipeline::RadiusPipelineError;
-use crate::pipeline::container::RadiusPacketContainer;
-use crate::pipeline_phase::RadiusPipelinePhase;
+use crate::packet::container::RadiusPacketContainer;
+use crate::pipeline::input::phase::RadiusInputPhaseCode;
+use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use log::{debug, info};
 
 #[derive(Default)]
-pub struct EapPacketRadiusPipelinePhase {}
+pub struct EapPacketRadiusInputPipelineStep {}
 
-impl EapPacketRadiusPipelinePhase {
+impl EapPacketRadiusInputPipelineStep {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl RadiusPipelinePhase for EapPacketRadiusPipelinePhase {
+impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
+    fn name(&self) -> String {
+        "EAP-Message".to_string()
+    }
+
+    fn phase_code(&self) -> RadiusInputPhaseCode {
+        RadiusInputPhaseCode::Eap
+    }
+
     fn process(
         &mut self,
         packet_container: &mut RadiusPacketContainer,
-    ) -> Result<(), RadiusPipelineError> {
+    ) -> Result<(), RadiusInputError> {
         let attributes = packet_container.packet().attributes();
 
         if !attributes.has(RadiusPacketAttributeType::EAPMessage) {
-            debug!("No EAP-Message attribute found in packet, skipping pipeline phase processing");
+            debug!("No EAP-Message attribute found in packet, skipping pipeline step processing");
             return Ok(());
         }
 
-        info!("EAP-Message attribute(s) found in packet, processing pipeline phase");
+        info!("EAP-Message attribute(s) found in packet, processing pipeline step");
 
         let eap_message: Vec<u8> = attributes
             .get(RadiusPacketAttributeType::EAPMessage)
@@ -41,20 +49,20 @@ impl RadiusPipelinePhase for EapPacketRadiusPipelinePhase {
                 match error {
                     EapPacketError::NotEnoughData => {
                         info!(
-                            "EAP-Message attribute(s) total length is shorter than it's length field, skipping pipeline phase processing"
+                            "EAP-Message attribute(s) total length is shorter than it's length field, skipping pipeline step processing"
                         );
                         return Ok(());
                     }
                     EapPacketError::InvalidCode => {
                         info!(
-                            "EAP-Message attribute(s) contains an invalid EAP code, skipping pipeline phase processing"
+                            "EAP-Message attribute(s) contains an invalid EAP code, skipping pipeline step processing"
                         );
                         return Ok(());
                     }
                 }
 
                 #[allow(unreachable_code)]
-                return Err(RadiusPipelineError::EapPacket(error));
+                return Err(RadiusInputError::EapPacket(error));
             }
         };
 
@@ -96,7 +104,7 @@ mod tests {
             },
         );
 
-        let mut target = EapPacketRadiusPipelinePhase::new();
+        let mut target = EapPacketRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         let result = container.get_metadata::<EapPacket>().unwrap();
@@ -133,7 +141,7 @@ mod tests {
             },
         );
 
-        let mut target = EapPacketRadiusPipelinePhase::new();
+        let mut target = EapPacketRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         assert_that!(container.has_metadata::<EapPacket>(), is_false());

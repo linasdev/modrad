@@ -1,6 +1,6 @@
 use crate::eap::packet::code::EapPacketCode;
 use crate::eap::packet::data::EapPacketData;
-use crate::pipeline::metadata::RadiusPacketMetadata;
+use crate::packet::metadata::RadiusPacketMetadata;
 use std::any::Any;
 use std::fmt::{Debug, Formatter};
 

@@ -5,6 +5,8 @@ use std::fmt::{Debug, Formatter};
 
 pub mod attribute;
 pub mod code;
+pub mod container;
+pub mod metadata;
 
 const RADIUS_PACKET_HEADER_SIZE: usize = 20;
 

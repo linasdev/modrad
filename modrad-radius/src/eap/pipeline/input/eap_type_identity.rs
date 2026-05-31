@@ -1,31 +1,39 @@
 use crate::eap::packet::EapPacket;
 use crate::eap::packet::data::EapPacketTypeData;
-use crate::pipeline::RadiusPipelineError;
-use crate::pipeline::container::RadiusPacketContainer;
-use crate::pipeline::metadata::RadiusPacketMetadata;
-use crate::pipeline_phase::RadiusPipelinePhase;
+use crate::packet::container::RadiusPacketContainer;
+use crate::packet::metadata::RadiusPacketMetadata;
+use crate::pipeline::input::phase::RadiusInputPhaseCode;
+use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use log::{debug, info};
 use std::any::Any;
 
 #[derive(Default)]
-pub struct EapTypeIdentityRadiusPipelinePhase {}
+pub struct EapTypeIdentityRadiusInputPipelineStep {}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum EapTypeDataIdentity {
     UserName(String),
 }
 
-impl EapTypeIdentityRadiusPipelinePhase {
+impl EapTypeIdentityRadiusInputPipelineStep {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl RadiusPipelinePhase for EapTypeIdentityRadiusPipelinePhase {
+impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
+    fn name(&self) -> String {
+        "EAP-Message/Identity".to_string()
+    }
+
+    fn phase_code(&self) -> RadiusInputPhaseCode {
+        todo!()
+    }
+
     fn process(
         &mut self,
         packet_container: &mut RadiusPacketContainer,
-    ) -> Result<(), RadiusPipelineError> {
+    ) -> Result<(), RadiusInputError> {
         if let Some(eap_packet) = packet_container.get_metadata::<EapPacket>() {
             if let Some(EapPacketTypeData::Identity(buffer)) = eap_packet.data().type_data() {
                 info!("EapPacket is of type Identity, processing pipeline phase");
@@ -95,7 +103,7 @@ mod tests {
             },
         ));
 
-        let mut target = EapTypeIdentityRadiusPipelinePhase::new();
+        let mut target = EapTypeIdentityRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         let result = container.get_metadata::<EapTypeDataIdentity>().unwrap();
@@ -121,7 +129,7 @@ mod tests {
             },
         );
 
-        let mut target = EapTypeIdentityRadiusPipelinePhase::new();
+        let mut target = EapTypeIdentityRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         assert_that!(container.has_metadata::<EapTypeDataIdentity>(), is_false());

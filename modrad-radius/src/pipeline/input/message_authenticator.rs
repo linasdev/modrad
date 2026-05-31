@@ -1,15 +1,15 @@
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
-use crate::pipeline::RadiusPipelineError;
-use crate::pipeline::container::RadiusPacketContainer;
-use crate::pipeline::metadata::RadiusPacketMetadata;
-use crate::pipeline_phase::RadiusPipelinePhase;
+use crate::packet::container::RadiusPacketContainer;
+use crate::packet::metadata::RadiusPacketMetadata;
+use crate::pipeline::input::phase::RadiusInputPhaseCode;
+use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use hmac::{Hmac, KeyInit, Mac};
 use log::info;
 use md5::Md5;
 use std::any::Any;
 
 #[derive(Default)]
-pub struct MessageAuthenticatorRadiusPipelinePhase {
+pub struct MessageAuthenticatorRadiusInputPipelineStep {
     secret: Vec<u8>,
 }
 
@@ -20,7 +20,7 @@ pub enum MessageAuthenticatorStatus {
     Invalid,
 }
 
-impl MessageAuthenticatorRadiusPipelinePhase {
+impl MessageAuthenticatorRadiusInputPipelineStep {
     pub fn new(secret: &str) -> Self {
         Self {
             secret: secret.as_bytes().to_vec(),
@@ -28,13 +28,19 @@ impl MessageAuthenticatorRadiusPipelinePhase {
     }
 }
 
-impl RadiusPipelinePhase for MessageAuthenticatorRadiusPipelinePhase {
+impl RadiusInputPipelineStep for MessageAuthenticatorRadiusInputPipelineStep {
+    fn name(&self) -> String {
+        "Message-Authenticator".to_string()
+    }
+
+    fn phase_code(&self) -> RadiusInputPhaseCode {
+        RadiusInputPhaseCode::Radius
+    }
+
     fn process(
         &mut self,
         packet_container: &mut RadiusPacketContainer,
-    ) -> Result<(), RadiusPipelineError> {
-        info!("Processing pipeline phase");
-
+    ) -> Result<(), RadiusInputError> {
         let attributes = packet_container.packet().attributes();
 
         let message_authenticator = attributes
@@ -117,7 +123,7 @@ mod tests {
             },
         );
 
-        let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
+        let mut target = MessageAuthenticatorRadiusInputPipelineStep::new("secret");
         target.process(&mut container).unwrap();
 
         let result = container
@@ -150,7 +156,7 @@ mod tests {
             },
         );
 
-        let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
+        let mut target = MessageAuthenticatorRadiusInputPipelineStep::new("secret");
         target.process(&mut container).unwrap();
 
         let result = container
@@ -181,7 +187,7 @@ mod tests {
             },
         );
 
-        let mut target = MessageAuthenticatorRadiusPipelinePhase::new("secret");
+        let mut target = MessageAuthenticatorRadiusInputPipelineStep::new("secret");
         target.process(&mut container).unwrap();
 
         let result = container

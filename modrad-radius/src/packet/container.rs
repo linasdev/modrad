@@ -1,8 +1,10 @@
 use crate::packet::RadiusPacket;
+use crate::packet::metadata::RadiusPacketMetadata;
 use crate::peer::RadiusPeer;
-use crate::pipeline::metadata::RadiusPacketMetadata;
+use crate::pipeline::RadiusPipelineTargetItem;
 use std::any::TypeId;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::net::SocketAddr;
 
 pub struct RadiusPacketContainer {
@@ -51,3 +53,15 @@ impl RadiusPacketContainer {
             .map(|old_value| *old_value)
     }
 }
+
+impl Debug for RadiusPacketContainer {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RadiusPacketContainer")
+            .field("packet", &self.packet)
+            .field("peer", &self.peer)
+            .field("metadata_count", &self.metadata.len())
+            .finish()
+    }
+}
+
+impl RadiusPipelineTargetItem for RadiusPacketContainer {}

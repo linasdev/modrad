@@ -1,6 +1,6 @@
 use crate::packet::RadiusPacket;
 use crate::packet::code::RadiusPacketCode;
-use crate::pipeline::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketContainer;
 use crate::transformer::{RadiusPacketTransformer, RadiusPacketTransformerError};
 use md5::{Digest, Md5};
 

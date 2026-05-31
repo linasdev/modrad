@@ -1,7 +1,7 @@
 use crate::packet::RadiusPacket;
 use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::packet::code::RadiusPacketCode;
-use crate::pipeline::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketContainer;
 use crate::transformer::{RadiusPacketTransformer, RadiusPacketTransformerError};
 use hmac::{Hmac, KeyInit, Mac};
 use md5::Md5;

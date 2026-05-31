@@ -2,8 +2,8 @@ use crate::connector::udp::config::UdpRadiusConnectorConfig;
 use crate::connector::{RadiusConnector, RadiusConnectorError};
 use async_trait::async_trait;
 use modrad_radius::packet::RadiusPacket;
+use modrad_radius::packet::container::RadiusPacketContainer;
 use modrad_radius::peer::RadiusPeer;
-use modrad_radius::pipeline::container::RadiusPacketContainer;
 use std::net::SocketAddr;
 use tokio::net::UdpSocket;
 

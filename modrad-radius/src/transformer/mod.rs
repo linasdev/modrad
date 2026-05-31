@@ -1,5 +1,5 @@
 use crate::packet::RadiusPacket;
-use crate::pipeline::container::RadiusPacketContainer;
+use crate::packet::container::RadiusPacketContainer;
 
 pub mod message_authenticator;
 pub mod response_authenticator;
