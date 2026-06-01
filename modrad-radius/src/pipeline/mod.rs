@@ -100,14 +100,14 @@ where
 
         for (phase_code, stage) in self.phases_by_code.iter_mut() {
             info!(
-                "Processing pipeline phase {}/{}",
+                "Processing pipeline phase {} / {}",
                 self.name.as_str(),
                 phase_code.name()
             );
 
             for (_, pipeline_step) in stage.steps_by_type.iter_mut() {
                 info!(
-                    "Processing pipeline step {}/{}/{}",
+                    "Processing pipeline step {} / {} / {}",
                     self.name.as_str(),
                     phase_code.name(),
                     pipeline_step.name()
