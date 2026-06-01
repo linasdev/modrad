@@ -6,21 +6,22 @@ use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::net::SocketAddr;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-pub struct RadiusPacketInputContainer {
+pub struct RadiusPacketContainer {
     packet: RadiusPacket,
     peer: Arc<RadiusPeer>,
     metadata: HashMap<TypeId, Box<dyn RadiusPacketMetadata>>,
 }
 
 #[derive(Debug)]
-pub struct RadiusPacketOutputContainer {
-    packet: RadiusPacket,
-    peer: Arc<RadiusPeer>,
-}
+pub struct RadiusPacketInputContainer(RadiusPacketContainer);
 
-impl RadiusPacketInputContainer {
+#[derive(Debug)]
+pub struct RadiusPacketOutputContainer(RadiusPacketContainer);
+
+impl RadiusPacketContainer {
     pub fn new(packet: RadiusPacket, peer: Arc<RadiusPeer>) -> Self {
         Self {
             packet,
@@ -61,29 +62,55 @@ impl RadiusPacketInputContainer {
     }
 }
 
-impl RadiusPacketOutputContainer {
+impl RadiusPacketInputContainer {
     pub fn new(packet: RadiusPacket, peer: Arc<RadiusPeer>) -> Self {
-        Self { packet, peer }
-    }
-
-    pub fn packet(&self) -> &RadiusPacket {
-        &self.packet
-    }
-
-    pub fn packet_mut(&mut self) -> &mut RadiusPacket {
-        &mut self.packet
-    }
-
-    pub fn into_packet(self) -> RadiusPacket {
-        self.packet
-    }
-
-    pub fn peer(&self) -> Arc<RadiusPeer> {
-        self.peer.clone()
+        Self(RadiusPacketContainer::new(packet, peer))
     }
 }
 
-impl Debug for RadiusPacketInputContainer {
+impl Deref for RadiusPacketInputContainer {
+    type Target = RadiusPacketContainer;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for RadiusPacketInputContainer {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl RadiusPacketOutputContainer {
+    pub fn new(packet: RadiusPacket, peer: Arc<RadiusPeer>) -> Self {
+        Self(RadiusPacketContainer::new(packet, peer))
+    }
+
+    pub fn packet_mut(&mut self) -> &mut RadiusPacket {
+        &mut self.0.packet
+    }
+
+    pub fn into_packet(self) -> RadiusPacket {
+        self.0.packet
+    }
+}
+
+impl Deref for RadiusPacketOutputContainer {
+    type Target = RadiusPacketContainer;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for RadiusPacketOutputContainer {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Debug for RadiusPacketContainer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RadiusPacketContainer")
             .field("packet", &self.packet)
