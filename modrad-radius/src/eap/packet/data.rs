@@ -145,23 +145,37 @@ impl EapPacketTypeData {
 
 impl From<EapPacketTypeData> for Vec<u8> {
     fn from(type_data: EapPacketTypeData) -> Self {
+        let mut buffer = Vec::with_capacity(type_data.length());
+
         match type_data {
-            EapPacketTypeData::Identity(buffer) => buffer,
-            EapPacketTypeData::Notification(buffer) => buffer,
+            EapPacketTypeData::Identity(type_data_buffer) => {
+                buffer.extend_from_slice(&type_data_buffer);
+                buffer
+            }
+            EapPacketTypeData::Notification(type_data_buffer) => {
+                buffer.extend_from_slice(&type_data_buffer);
+                buffer
+            }
             EapPacketTypeData::Nak { supported_types } => {
                 supported_types.into_iter().map(u8::from).collect()
             }
-            EapPacketTypeData::MD5Challenge(buffer) => buffer,
-            EapPacketTypeData::OneTimePassword(buffer) => buffer,
-            EapPacketTypeData::GenericTokenCard(buffer) => buffer,
+            EapPacketTypeData::MD5Challenge(type_data_buffer) => {
+                buffer.extend_from_slice(&type_data_buffer);
+                buffer
+            }
+            EapPacketTypeData::OneTimePassword(type_data_buffer) => {
+                buffer.extend_from_slice(&type_data_buffer);
+                buffer
+            }
+            EapPacketTypeData::GenericTokenCard(type_data_buffer) => {
+                buffer.extend_from_slice(&type_data_buffer);
+                buffer
+            }
             EapPacketTypeData::ExpandedType {
                 vendor_id,
                 vendor_type,
                 vendor_data,
             } => {
-                let mut buffer =
-                    Vec::with_capacity(EAP_PACKET_EXPANDED_TYPE_HEADER_SIZE + vendor_data.len());
-
                 for byte in &u32::to_be_bytes(vendor_id)[1..] {
                     buffer.push(*byte);
                 }
@@ -173,7 +187,10 @@ impl From<EapPacketTypeData> for Vec<u8> {
                 buffer.extend_from_slice(&vendor_data);
                 buffer
             }
-            EapPacketTypeData::Other(_, buffer) => buffer,
+            EapPacketTypeData::Other(_, type_data_buffer) => {
+                buffer.extend_from_slice(&type_data_buffer);
+                buffer
+            }
         }
     }
 }
@@ -540,5 +557,19 @@ mod tests {
             result,
             matches_pattern!(EapPacketTypeData::Other(eq(&0), eq(&[1, 2, 3]))),
         );
+    }
+
+    #[test]
+    fn should_not_convert_from_type_and_byte_buffer_to_eap_packet_expanded_type_when_there_is_not_enough_data()
+     {
+        let packet_type = EapPacketType::ExpandedType;
+        let buffer = vec![
+            0, 0, 1, // vendor id
+            0, 0, 0, // missing byte
+        ];
+
+        let result = EapPacketTypeData::try_from((packet_type, &buffer[..])).unwrap_err();
+
+        assert_that!(result, matches_pattern!(EapPacketError::NotEnoughData));
     }
 }

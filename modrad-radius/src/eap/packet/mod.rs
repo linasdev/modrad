@@ -315,4 +315,20 @@ mod tests {
             },)
         );
     }
+
+    #[test]
+    fn should_not_convert_from_byte_buffer_to_eap_packet_request_when_there_is_not_enough_data() {
+        let buffer = vec![
+            1, // Request
+            0, // Identifier
+            0, // Length MSB
+            8, // Length LSB
+            1, // Identity
+            1, 2, // Missing byte
+        ];
+
+        let result = EapPacket::try_from(&buffer[..]).unwrap_err();
+
+        assert_that!(result, matches_pattern!(EapPacketError::NotEnoughData));
+    }
 }
