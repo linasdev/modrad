@@ -1,4 +1,4 @@
-mod chap;
+pub mod chap;
 pub mod eap;
 pub mod identifier_pool;
 pub mod packet;
