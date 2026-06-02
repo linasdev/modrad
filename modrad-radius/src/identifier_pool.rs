@@ -3,9 +3,13 @@ use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+#[derive(Clone)]
 pub struct ChapIdentifierPool(IdentifierPool<u8>);
+
+#[derive(Clone)]
 pub struct EapIdentifierPool(IdentifierPool<u8>);
 
+#[derive(Clone)]
 pub struct IdentifierPool<I> {
     used_identifiers: Arc<Mutex<Vec<(I, Instant)>>>,
     free_identifiers: Arc<Mutex<Vec<I>>>,
