@@ -7,7 +7,9 @@ pub mod phase;
 pub mod response_authenticator;
 
 #[derive(Debug)]
-pub enum RadiusOutputError {}
+pub enum RadiusOutputError {
+    NoIdentifierAvailable,
+}
 
 pub struct RadiusOutputPipelineTarget;
 

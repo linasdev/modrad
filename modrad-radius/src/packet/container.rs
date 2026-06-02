@@ -48,6 +48,13 @@ impl RadiusPacketContainer {
         self.metadata.contains_key(&TypeId::of::<T>())
     }
 
+    pub fn take_metadata<T: RadiusPacketMetadata + 'static>(&mut self) -> Option<T> {
+        self.metadata
+            .remove(&TypeId::of::<T>())
+            .and_then(|value| value.into_any().downcast::<T>().ok())
+            .map(|value| *value)
+    }
+
     pub fn get_metadata<T: RadiusPacketMetadata + 'static>(&self) -> Option<&T> {
         self.metadata
             .get(&TypeId::of::<T>())
