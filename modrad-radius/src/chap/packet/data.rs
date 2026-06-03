@@ -64,7 +64,7 @@ impl TryFrom<(ChapPacketCode, &[u8])> for ChapPacketData {
 
                 let value_length = buffer[0] as usize;
 
-                if buffer.len() < value_length + 2 {
+                if buffer.len() < value_length + 1 {
                     return Err(ChapPacketError::NotEnoughData);
                 }
 
