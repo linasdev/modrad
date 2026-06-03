@@ -1,7 +1,7 @@
-use crate::packet::RadiusPacket;
-use crate::packet::metadata::RadiusPacketMetadata;
 use crate::peer::RadiusPeer;
 use crate::pipeline::RadiusPipelineAcceptItem;
+use crate::radius::RadiusPacket;
+use crate::radius::metadata::RadiusPacketMetadata;
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};

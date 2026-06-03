@@ -1,6 +1,11 @@
 use crate::pipeline::RadiusPipelinePhaseCode;
 use std::cmp::Ordering;
 
+pub mod eap_layer;
+pub mod message_authenticator;
+pub mod radius_layer;
+pub mod response_authenticator;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord)]
 pub enum RadiusOutputPhaseCode {
     EapLayer,

@@ -1,7 +1,7 @@
+use crate::chap::ChapPacketError;
+use crate::chap::code::ChapPacketCode;
+use crate::radius::metadata::RadiusPacketMetadata;
 use std::any::Any;
-use crate::chap::packet::ChapPacketError;
-use crate::chap::packet::code::ChapPacketCode;
-use crate::packet::metadata::RadiusPacketMetadata;
 
 #[derive(Debug)]
 pub enum ChapPacketData {

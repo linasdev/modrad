@@ -1,26 +1,26 @@
-use crate::chap::packet::ChapPacketError;
-use crate::eap::packet::EapPacket;
-use crate::eap::packet::data::{EapPacketData, EapPacketTypeData};
-use crate::packet::container::RadiusPacketInputContainer;
-use log::{debug, info, trace, warn};
-use pretty_hex::PrettyHex;
-use crate::chap::packet::code::ChapPacketCode;
-use crate::chap::packet::data::ChapPacketData;
+use crate::chap::ChapPacketError;
+use crate::chap::code::ChapPacketCode;
+use crate::chap::data::ChapPacketData;
+use crate::eap::EapPacket;
+use crate::eap::data::{EapPacketData, EapPacketTypeData};
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
+use crate::radius::container::RadiusPacketInputContainer;
+use log::{debug, info, trace, warn};
+use pretty_hex::PrettyHex;
 
 #[derive(Default)]
-pub struct ChapPacketRadiusInputPipelineStep {}
+pub struct EapTypeMD5ChallengeRadiusInputPipelineStep {}
 
-impl ChapPacketRadiusInputPipelineStep {
+impl EapTypeMD5ChallengeRadiusInputPipelineStep {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl RadiusInputPipelineStep for ChapPacketRadiusInputPipelineStep {
+impl RadiusInputPipelineStep for EapTypeMD5ChallengeRadiusInputPipelineStep {
     fn name(&self) -> String {
-        "ChapPacket".to_string()
+        "MD5-Challenge".to_string()
     }
 
     fn phase_code(&self) -> RadiusInputPhaseCode {
@@ -34,11 +34,20 @@ impl RadiusInputPipelineStep for ChapPacketRadiusInputPipelineStep {
         if let Some(eap_packet) = input_packet_container.get_metadata::<EapPacket>() {
             debug!("EapPacket metadata found in input packet container, checking type data");
 
-            if let EapPacketData::Response { type_data: EapPacketTypeData::MD5Challenge(buffer)} = eap_packet.data() {
+            if let EapPacketData::Response {
+                type_data: EapPacketTypeData::MD5Challenge(buffer),
+            } = eap_packet.data()
+            {
                 debug!("EapPacket is of type MD5-Challenge, processing pipeline step");
-                trace!("Parsing ChapPacketData::Response from buffer:\n{:?}", buffer.hex_dump());
+                trace!(
+                    "Parsing ChapPacketData::Response from buffer:\n{:?}",
+                    buffer.hex_dump()
+                );
 
-                let chap_packet_data = match ChapPacketData::try_from((ChapPacketCode::Response, &buffer[..])) {
+                let chap_packet_data = match ChapPacketData::try_from((
+                    ChapPacketCode::Response,
+                    &buffer[..],
+                )) {
                     Ok(chap_packet_data) => chap_packet_data,
                     Err(error) => {
                         match error {
@@ -48,7 +57,7 @@ impl RadiusInputPipelineStep for ChapPacketRadiusInputPipelineStep {
                                 );
                                 return Ok(());
                             }
-                            _ => {},
+                            _ => {}
                         }
 
                         #[allow(unreachable_code)]
@@ -56,7 +65,9 @@ impl RadiusInputPipelineStep for ChapPacketRadiusInputPipelineStep {
                     }
                 };
 
-                info!("Valid ChapPacketData::Response found in packet, adding ChapPacketData::Response metadata");
+                info!(
+                    "Valid ChapPacketData::Response found in packet, adding ChapPacketData::Response metadata"
+                );
                 input_packet_container.set_metadata(chap_packet_data);
             }
 
@@ -70,11 +81,11 @@ impl RadiusInputPipelineStep for ChapPacketRadiusInputPipelineStep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eap::packet::data::{EapPacketData, EapPacketTypeData};
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::RadiusPacketAttributes;
-    use crate::packet::code::RadiusPacketCode;
+    use crate::eap::data::{EapPacketData, EapPacketTypeData};
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::RadiusPacketAttributes;
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
 
@@ -95,17 +106,19 @@ mod tests {
             220,
             EapPacketData::Response {
                 type_data: EapPacketTypeData::MD5Challenge(vec![
-                    3,  // value length
+                    3, // value length
                     1, 2, 3, // value
                     4, 5, 6, // name
                 ]),
             },
         ));
 
-        let mut target = ChapPacketRadiusInputPipelineStep::new();
+        let mut target = EapTypeMD5ChallengeRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
-        let ChapPacketData::Response { value, name } = container.get_metadata::<ChapPacketData>().unwrap() else {
+        let ChapPacketData::Response { value, name } =
+            container.get_metadata::<ChapPacketData>().unwrap()
+        else {
             unreachable!()
         };
 
@@ -114,7 +127,8 @@ mod tests {
     }
 
     #[test]
-    fn should_not_add_chap_packet_data_metadata_to_container_when_the_eap_packet_metadata_is_not_of_type_md5_challenge() {
+    fn should_not_add_chap_packet_data_metadata_to_container_when_the_eap_packet_metadata_is_not_of_type_md5_challenge()
+     {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -133,14 +147,15 @@ mod tests {
             },
         ));
 
-        let mut target = ChapPacketRadiusInputPipelineStep::new();
+        let mut target = EapTypeMD5ChallengeRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         assert_that!(container.has_metadata::<ChapPacketData>(), is_false());
     }
 
     #[test]
-    fn should_not_add_chap_packet_data_metadata_to_container_when_there_is_no_eap_packet_metadata() {
+    fn should_not_add_chap_packet_data_metadata_to_container_when_there_is_no_eap_packet_metadata()
+    {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -153,7 +168,7 @@ mod tests {
             }),
         );
 
-        let mut target = ChapPacketRadiusInputPipelineStep::new();
+        let mut target = EapTypeMD5ChallengeRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         assert_that!(container.has_metadata::<ChapPacketData>(), is_false());

@@ -1,21 +1,21 @@
-use crate::eap::packet::{EapPacket, EapPacketError};
-use crate::packet::attribute::RadiusPacketAttributeType;
-use crate::packet::container::RadiusPacketInputContainer;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
+use crate::radius::attribute::RadiusPacketAttributeType;
+use crate::radius::container::RadiusPacketInputContainer;
 use log::{debug, info, trace, warn};
 use pretty_hex::PrettyHex;
+use crate::eap::{EapPacket, EapPacketError};
 
 #[derive(Default)]
-pub struct EapPacketRadiusInputPipelineStep {}
+pub struct EapMessageRadiusInputPipelineStep {}
 
-impl EapPacketRadiusInputPipelineStep {
+impl EapMessageRadiusInputPipelineStep {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
+impl RadiusInputPipelineStep for EapMessageRadiusInputPipelineStep {
     fn name(&self) -> String {
         "EAP-Message".to_string()
     }
@@ -44,7 +44,10 @@ impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
             .copied()
             .collect();
 
-        trace!("Parsing EapPacket from buffer: {:?}", eap_message.hex_dump());
+        trace!(
+            "Parsing EapPacket from buffer: {:?}",
+            eap_message.hex_dump()
+        );
 
         let eap_packet = match EapPacket::try_from(&eap_message[..]) {
             Ok(eap_packet) => eap_packet,
@@ -79,12 +82,12 @@ impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eap::packet::code::EapPacketCode;
-    use crate::eap::packet::data::{EapPacketData, EapPacketType, EapPacketTypeData};
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
-    use crate::packet::code::RadiusPacketCode;
+    use crate::eap::code::EapPacketCode;
+    use crate::eap::data::{EapPacketData, EapPacketType, EapPacketTypeData};
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
 
@@ -108,7 +111,7 @@ mod tests {
             }),
         );
 
-        let mut target = EapPacketRadiusInputPipelineStep::new();
+        let mut target = EapMessageRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         let result = container.get_metadata::<EapPacket>().unwrap();
@@ -145,7 +148,7 @@ mod tests {
             }),
         );
 
-        let mut target = EapPacketRadiusInputPipelineStep::new();
+        let mut target = EapMessageRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
         assert_that!(container.has_metadata::<EapPacket>(), is_false());

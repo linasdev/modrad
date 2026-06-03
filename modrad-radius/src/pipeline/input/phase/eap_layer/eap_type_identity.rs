@@ -1,9 +1,9 @@
-use crate::eap::packet::EapPacket;
-use crate::eap::packet::data::EapPacketTypeData;
-use crate::packet::container::RadiusPacketInputContainer;
-use crate::packet::metadata::RadiusPacketMetadata;
+use crate::eap::EapPacket;
+use crate::eap::data::EapPacketTypeData;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
+use crate::radius::container::RadiusPacketInputContainer;
+use crate::radius::metadata::RadiusPacketMetadata;
 use log::{debug, info};
 use std::any::Any;
 
@@ -76,11 +76,11 @@ impl RadiusPacketMetadata for EapTypeDataIdentity {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eap::packet::data::EapPacketData;
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::RadiusPacketAttributes;
-    use crate::packet::code::RadiusPacketCode;
+    use crate::eap::data::EapPacketData;
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::RadiusPacketAttributes;
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
 

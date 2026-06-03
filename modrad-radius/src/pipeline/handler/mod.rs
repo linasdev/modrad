@@ -1,8 +1,7 @@
-use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
+use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 
-pub mod message_authenticator;
 pub mod phase;
 
 #[derive(Debug)]

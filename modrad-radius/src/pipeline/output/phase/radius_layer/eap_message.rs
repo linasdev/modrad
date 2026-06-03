@@ -1,22 +1,22 @@
-use crate::eap::packet::EapPacket;
-use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
-use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use crate::eap::EapPacket;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
+use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
+use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use log::info;
 
 #[derive(Default)]
-pub struct EapPacketRadiusOutputPipelineStep {}
+pub struct EapMessageRadiusOutputPipelineStep {}
 
-impl EapPacketRadiusOutputPipelineStep {
+impl EapMessageRadiusOutputPipelineStep {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl RadiusOutputPipelineStep for EapPacketRadiusOutputPipelineStep {
+impl RadiusOutputPipelineStep for EapMessageRadiusOutputPipelineStep {
     fn name(&self) -> String {
-        "EapPacket".to_string()
+        "EAP-Message".to_string()
     }
 
     fn phase_code(&self) -> RadiusOutputPhaseCode {
@@ -61,11 +61,11 @@ impl RadiusOutputPipelineStep for EapPacketRadiusOutputPipelineStep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eap::packet::data::{EapPacketData, EapPacketTypeData};
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::RadiusPacketAttributes;
-    use crate::packet::code::RadiusPacketCode;
+    use crate::eap::data::{EapPacketData, EapPacketTypeData};
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::RadiusPacketAttributes;
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
 
@@ -100,7 +100,7 @@ mod tests {
             },
         ));
 
-        let mut target = EapPacketRadiusOutputPipelineStep::new();
+        let mut target = EapMessageRadiusOutputPipelineStep::new();
         target
             .process(&mut output_container, &input_container)
             .unwrap();
@@ -157,7 +157,7 @@ mod tests {
             },
         ));
 
-        let mut target = EapPacketRadiusOutputPipelineStep::new();
+        let mut target = EapMessageRadiusOutputPipelineStep::new();
         target
             .process(&mut output_container, &input_container)
             .unwrap();
@@ -201,7 +201,7 @@ mod tests {
             }),
         );
 
-        let mut target = EapPacketRadiusOutputPipelineStep::new();
+        let mut target = EapMessageRadiusOutputPipelineStep::new();
         target
             .process(&mut output_container, &input_container)
             .unwrap();

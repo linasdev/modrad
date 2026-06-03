@@ -1,10 +1,8 @@
-use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
+use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 
-pub mod message_authenticator;
 pub mod phase;
-pub mod response_authenticator;
 
 #[derive(Debug)]
 pub enum RadiusOutputError {

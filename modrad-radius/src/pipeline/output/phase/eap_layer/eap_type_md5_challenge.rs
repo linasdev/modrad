@@ -1,18 +1,18 @@
-use crate::chap::packet::data::ChapPacketData;
-use crate::eap::packet::EapPacket;
-use crate::eap::packet::data::{EapPacketData, EapPacketTypeData};
+use crate::chap::data::ChapPacketData;
+use crate::eap::EapPacket;
+use crate::eap::data::{EapPacketData, EapPacketTypeData};
 use crate::identifier_pool::EapIdentifierPool;
-use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
+use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use log::info;
 use std::time::Instant;
 
-pub struct ChapPacketRadiusOutputPipelineStep {
+pub struct EapTypeMD5ChallengeRadiusOutputPipelineStep {
     eap_identifier_pool: EapIdentifierPool,
 }
 
-impl ChapPacketRadiusOutputPipelineStep {
+impl EapTypeMD5ChallengeRadiusOutputPipelineStep {
     pub fn new(eap_identifier_pool: EapIdentifierPool) -> Self {
         Self {
             eap_identifier_pool,
@@ -20,9 +20,9 @@ impl ChapPacketRadiusOutputPipelineStep {
     }
 }
 
-impl RadiusOutputPipelineStep for ChapPacketRadiusOutputPipelineStep {
+impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
     fn name(&self) -> String {
-        "ChapPacket".to_string()
+        "MD5-Challenge".to_string()
     }
 
     fn phase_code(&self) -> RadiusOutputPhaseCode {
@@ -73,13 +73,13 @@ impl RadiusOutputPipelineStep for ChapPacketRadiusOutputPipelineStep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chap::packet::data::ChapPacketData;
-    use crate::eap::packet::code::EapPacketCode;
-    use crate::eap::packet::data::EapPacketData;
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::RadiusPacketAttributes;
-    use crate::packet::code::RadiusPacketCode;
+    use crate::chap::data::ChapPacketData;
+    use crate::eap::code::EapPacketCode;
+    use crate::eap::data::EapPacketData;
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::RadiusPacketAttributes;
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
     use std::time::Duration;
@@ -113,8 +113,9 @@ mod tests {
             name: vec![4, 5, 6],
         });
 
-        let mut target =
-            ChapPacketRadiusOutputPipelineStep::new(EapIdentifierPool::new(Duration::from_mins(1)));
+        let mut target = EapTypeMD5ChallengeRadiusOutputPipelineStep::new(EapIdentifierPool::new(
+            Duration::from_mins(1),
+        ));
         target
             .process(&mut output_container, &input_container)
             .unwrap();
@@ -127,7 +128,7 @@ mod tests {
             result.data(),
             matches_pattern!(EapPacketData::Request {
                 type_data: matches_pattern!(EapPacketTypeData::MD5Challenge(&[
-                    3,  // value length
+                    3, // value length
                     1, 2, 3, // value
                     4, 5, 6, // name
                 ])),
@@ -170,8 +171,9 @@ mod tests {
             },
         ));
 
-        let mut target =
-            ChapPacketRadiusOutputPipelineStep::new(EapIdentifierPool::new(Duration::from_mins(1)));
+        let mut target = EapTypeMD5ChallengeRadiusOutputPipelineStep::new(EapIdentifierPool::new(
+            Duration::from_mins(1),
+        ));
         target
             .process(&mut output_container, &input_container)
             .unwrap();
@@ -191,7 +193,8 @@ mod tests {
     }
 
     #[test]
-    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_chap_packet_data_metadata() {
+    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_chap_packet_data_metadata()
+    {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -215,8 +218,9 @@ mod tests {
             }),
         );
 
-        let mut target =
-            ChapPacketRadiusOutputPipelineStep::new(EapIdentifierPool::new(Duration::from_mins(1)));
+        let mut target = EapTypeMD5ChallengeRadiusOutputPipelineStep::new(EapIdentifierPool::new(
+            Duration::from_mins(1),
+        ));
         target
             .process(&mut output_container, &input_container)
             .unwrap();

@@ -1,8 +1,8 @@
-use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
-use crate::packet::container::RadiusPacketInputContainer;
-use crate::packet::metadata::RadiusPacketMetadata;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
+use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
+use crate::radius::container::RadiusPacketInputContainer;
+use crate::radius::metadata::RadiusPacketMetadata;
 use hmac::{Hmac, KeyInit, Mac};
 use log::info;
 use md5::Md5;
@@ -102,10 +102,10 @@ impl RadiusPacketMetadata for MessageAuthenticatorStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::RadiusPacketAttributes;
-    use crate::packet::code::RadiusPacketCode;
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::RadiusPacketAttributes;
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
 

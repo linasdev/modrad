@@ -1,6 +1,9 @@
 use crate::pipeline::RadiusPipelinePhaseCode;
 use std::cmp::Ordering;
 
+pub mod eap_layer;
+pub mod radius_layer;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord)]
 pub enum RadiusInputPhaseCode {
     RadiusLayer,

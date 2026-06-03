@@ -1,5 +1,5 @@
-use crate::eap::packet::EapPacketError;
-use crate::eap::packet::code::EapPacketCode;
+use crate::eap::EapPacketError;
+use crate::eap::code::EapPacketCode;
 use modrad_macros::define_byte_enum;
 
 const EAP_PACKET_EXPANDED_TYPE_HEADER_SIZE: usize = 7;

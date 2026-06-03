@@ -1,5 +1,5 @@
-use crate::packet::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
-use crate::packet::code::RadiusPacketCode;
+use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
+use crate::radius::code::RadiusPacketCode;
 use crate::tag_length_value::TagLengthValueError;
 use std::fmt::{Debug, Formatter};
 
@@ -153,7 +153,7 @@ impl Debug for RadiusPacket {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::packet::attribute::RadiusPacketAttributeType;
+    use crate::radius::attribute::RadiusPacketAttributeType;
     use googletest::prelude::*;
 
     #[test]

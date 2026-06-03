@@ -1,6 +1,9 @@
 use crate::pipeline::RadiusPipelinePhaseCode;
 use std::cmp::Ordering;
 
+pub mod eap;
+pub mod validation;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord)]
 pub enum RadiusHandlerPhaseCode {
     Validation,

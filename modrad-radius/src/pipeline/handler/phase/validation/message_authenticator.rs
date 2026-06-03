@@ -1,8 +1,8 @@
-use crate::packet::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use crate::pipeline::RadiusPipelineStepAction;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::handler::{RadiusHandlerError, RadiusHandlerPipelineStep};
-use crate::pipeline::input::message_authenticator::MessageAuthenticatorStatus;
+use crate::pipeline::input::phase::radius_layer::message_authenticator::MessageAuthenticatorStatus;
+use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use log::{info, warn};
 
 pub struct MessageAuthenticatorRadiusHandlerPipelineStep {}
@@ -50,10 +50,10 @@ impl RadiusHandlerPipelineStep for MessageAuthenticatorRadiusHandlerPipelineStep
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::packet::RadiusPacket;
-    use crate::packet::attribute::RadiusPacketAttributes;
-    use crate::packet::code::RadiusPacketCode;
     use crate::peer::RadiusPeer;
+    use crate::radius::RadiusPacket;
+    use crate::radius::attribute::RadiusPacketAttributes;
+    use crate::radius::code::RadiusPacketCode;
     use googletest::prelude::*;
     use std::sync::Arc;
 

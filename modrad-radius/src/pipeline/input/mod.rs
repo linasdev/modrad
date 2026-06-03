@@ -1,11 +1,10 @@
-use crate::eap::packet::EapPacketError;
-use crate::packet::container::RadiusPacketInputContainer;
+use crate::chap::ChapPacketError;
+use crate::eap::EapPacketError;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
+use crate::radius::container::RadiusPacketInputContainer;
 use std::string::FromUtf8Error;
-use crate::chap::packet::ChapPacketError;
 
-pub mod message_authenticator;
 pub mod phase;
 
 #[derive(Debug)]
