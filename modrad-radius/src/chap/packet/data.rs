@@ -1,5 +1,7 @@
+use std::any::Any;
 use crate::chap::packet::ChapPacketError;
 use crate::chap::packet::code::ChapPacketCode;
+use crate::packet::metadata::RadiusPacketMetadata;
 
 #[derive(Debug)]
 pub enum ChapPacketData {
@@ -82,6 +84,16 @@ impl TryFrom<(ChapPacketCode, &[u8])> for ChapPacketData {
                 message: buffer.to_vec(),
             }),
         }
+    }
+}
+
+impl RadiusPacketMetadata for ChapPacketData {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 

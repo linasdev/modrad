@@ -1,7 +1,5 @@
 use crate::chap::packet::code::ChapPacketCode;
 use crate::chap::packet::data::ChapPacketData;
-use crate::packet::metadata::RadiusPacketMetadata;
-use std::any::Any;
 use std::fmt::{Debug, Formatter};
 
 pub mod code;
@@ -78,16 +76,6 @@ impl TryFrom<&[u8]> for ChapPacket {
         let data = ChapPacketData::try_from((code, &buffer[CHAP_PACKET_HEADER_SIZE..length]))?;
 
         Ok(Self { identifier, data })
-    }
-}
-
-impl RadiusPacketMetadata for ChapPacket {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
