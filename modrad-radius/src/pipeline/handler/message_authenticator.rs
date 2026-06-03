@@ -3,7 +3,7 @@ use crate::pipeline::RadiusPipelineStepAction;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::handler::{RadiusHandlerError, RadiusHandlerPipelineStep};
 use crate::pipeline::input::message_authenticator::MessageAuthenticatorStatus;
-use log::info;
+use log::{info, warn};
 
 pub struct MessageAuthenticatorRadiusHandlerPipelineStep {}
 
@@ -34,7 +34,7 @@ impl RadiusHandlerPipelineStep for MessageAuthenticatorRadiusHandlerPipelineStep
                 Ok(RadiusPipelineStepAction::NextStep)
             }
             Some(MessageAuthenticatorStatus::Invalid) => {
-                info!(
+                warn!(
                     "RADIUS packet has an invalid Message-Authenticator attribute, discarding packet"
                 );
                 Ok(RadiusPipelineStepAction::DiscardTarget)

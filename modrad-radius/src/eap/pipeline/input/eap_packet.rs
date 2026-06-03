@@ -3,7 +3,8 @@ use crate::packet::attribute::RadiusPacketAttributeType;
 use crate::packet::container::RadiusPacketInputContainer;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
-use log::{debug, info};
+use log::{debug, info, trace, warn};
+use pretty_hex::PrettyHex;
 
 #[derive(Default)]
 pub struct EapPacketRadiusInputPipelineStep {}
@@ -43,18 +44,20 @@ impl RadiusInputPipelineStep for EapPacketRadiusInputPipelineStep {
             .copied()
             .collect();
 
+        trace!("Parsing EapPacket from buffer: {:?}", eap_message.hex_dump());
+
         let eap_packet = match EapPacket::try_from(&eap_message[..]) {
             Ok(eap_packet) => eap_packet,
             Err(error) => {
                 match error {
                     EapPacketError::NotEnoughData => {
-                        info!(
+                        warn!(
                             "EAP-Message attribute(s) total length is shorter than it's length field, skipping pipeline step processing"
                         );
                         return Ok(());
                     }
                     EapPacketError::InvalidCode => {
-                        info!(
+                        warn!(
                             "EAP-Message attribute(s) contains an invalid EAP code, skipping pipeline step processing"
                         );
                         return Ok(());
