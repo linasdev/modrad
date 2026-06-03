@@ -1,4 +1,4 @@
-use crate::chap::packet::ChapPacket;
+use crate::chap::packet::data::ChapPacketData;
 use crate::eap::packet::EapPacket;
 use crate::eap::packet::data::{EapPacketData, EapPacketTypeData};
 use crate::identifier_pool::EapIdentifierPool;
@@ -34,9 +34,9 @@ impl RadiusOutputPipelineStep for ChapPacketRadiusOutputPipelineStep {
         output_packet_container: &mut RadiusPacketOutputContainer,
         _input_packet_container: &RadiusPacketInputContainer,
     ) -> Result<(), RadiusOutputError> {
-        if let Some(chap_packet) = output_packet_container.take_metadata::<ChapPacket>() {
+        if let Some(chap_packet_data) = output_packet_container.take_metadata::<ChapPacketData>() {
             info!(
-                "ChapPacket metadata found in output packet container, checking for EapPacket metadata"
+                "ChapPacketData metadata found in output packet container, checking for EapPacket metadata"
             );
 
             if !output_packet_container.has_metadata::<EapPacket>() {
@@ -52,7 +52,7 @@ impl RadiusOutputPipelineStep for ChapPacketRadiusOutputPipelineStep {
                 let eap_packet = EapPacket::new(
                     eap_identifier,
                     EapPacketData::Request {
-                        type_data: EapPacketTypeData::MD5Challenge(Vec::from(chap_packet)),
+                        type_data: EapPacketTypeData::MD5Challenge(Vec::from(chap_packet_data)),
                     },
                 );
 
@@ -85,7 +85,7 @@ mod tests {
     use std::time::Duration;
 
     #[test]
-    fn should_add_eap_packet_metadata_to_container_from_chap_packet_metadata() {
+    fn should_add_eap_packet_metadata_to_container_from_chap_packet_data_metadata() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -108,13 +108,10 @@ mod tests {
                 remote_address: "127.0.0.1:1234".parse().unwrap(),
             }),
         );
-        output_container.set_metadata(ChapPacket::new(
-            220,
-            ChapPacketData::Challenge {
-                value: vec![1, 2, 3],
-                name: vec![4, 5, 6],
-            },
-        ));
+        output_container.set_metadata(ChapPacketData::Challenge {
+            value: vec![1, 2, 3],
+            name: vec![4, 5, 6],
+        });
 
         let mut target =
             ChapPacketRadiusOutputPipelineStep::new(EapIdentifierPool::new(Duration::from_mins(1)));
@@ -130,9 +127,6 @@ mod tests {
             result.data(),
             matches_pattern!(EapPacketData::Request {
                 type_data: matches_pattern!(EapPacketTypeData::MD5Challenge(&[
-                    1,   // code
-                    220, // identifier
-                    0, 11, // length
                     3,  // value length
                     1, 2, 3, // value
                     4, 5, 6, // name
@@ -165,13 +159,10 @@ mod tests {
                 remote_address: "127.0.0.1:1234".parse().unwrap(),
             }),
         );
-        output_container.set_metadata(ChapPacket::new(
-            123,
-            ChapPacketData::Challenge {
-                value: vec![1, 2, 3],
-                name: vec![4, 5, 6],
-            },
-        ));
+        output_container.set_metadata(ChapPacketData::Challenge {
+            value: vec![1, 2, 3],
+            name: vec![4, 5, 6],
+        });
         output_container.set_metadata(EapPacket::new(
             220,
             EapPacketData::Response {
@@ -200,7 +191,7 @@ mod tests {
     }
 
     #[test]
-    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_chap_packet_metadata() {
+    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_chap_packet_data_metadata() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
