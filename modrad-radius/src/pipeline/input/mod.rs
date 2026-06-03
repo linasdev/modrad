@@ -3,6 +3,7 @@ use crate::packet::container::RadiusPacketInputContainer;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 use std::string::FromUtf8Error;
+use crate::chap::packet::ChapPacketError;
 
 pub mod message_authenticator;
 pub mod phase;
@@ -10,6 +11,7 @@ pub mod phase;
 #[derive(Debug)]
 pub enum RadiusInputError {
     EapPacket(EapPacketError),
+    ChapPacket(ChapPacketError),
     FromUtf8(FromUtf8Error),
 }
 
@@ -51,6 +53,12 @@ where
 impl From<EapPacketError> for RadiusInputError {
     fn from(error: EapPacketError) -> Self {
         RadiusInputError::EapPacket(error)
+    }
+}
+
+impl From<ChapPacketError> for RadiusInputError {
+    fn from(error: ChapPacketError) -> Self {
+        RadiusInputError::ChapPacket(error)
     }
 }
 
