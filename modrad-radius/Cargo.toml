@@ -8,6 +8,7 @@ log = "0.4.29"
 hmac = "0.13.0"
 md-5 = "0.11.0"
 num-traits = "0.2.19"
+pretty-hex = "0.4.2"
 
 [dependencies.modrad-macros]
 path = "../modrad-macros"
