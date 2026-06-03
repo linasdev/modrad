@@ -4,9 +4,6 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
-pub struct ChapIdentifierPool(IdentifierPool<u8>);
-
-#[derive(Clone)]
 pub struct EapIdentifierPool(IdentifierPool<u8>);
 
 #[derive(Clone)]
@@ -68,26 +65,6 @@ impl<I: PrimInt> IdentifierPool<I> {
             used_identifiers.swap_remove(index);
             self.free_identifiers.lock().unwrap().push(identifier);
         }
-    }
-}
-
-impl ChapIdentifierPool {
-    pub fn new(allocation_timeout: Duration) -> Self {
-        Self(IdentifierPool::new(allocation_timeout))
-    }
-}
-
-impl Deref for ChapIdentifierPool {
-    type Target = IdentifierPool<u8>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for ChapIdentifierPool {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
