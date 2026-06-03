@@ -1,6 +1,7 @@
 use log::info;
 use std::any::TypeId;
 use std::collections::BTreeMap;
+use colored::Colorize;
 
 pub mod handler;
 pub mod input;
@@ -96,21 +97,21 @@ where
     }
 
     pub fn process(&mut self, mut target: T::Ref<'_>) -> Result<Option<A>, E> {
-        info!("Processing pipeline {}", self.name.as_str());
+        info!("Processing pipeline {}", self.name.as_str().on_red());
 
         for (phase_code, stage) in self.phases_by_code.iter_mut() {
             info!(
                 "Processing pipeline phase {} / {}",
-                self.name.as_str(),
-                phase_code.name()
+                self.name.as_str().on_green(),
+                phase_code.name().on_green()
             );
 
             for (_, pipeline_step) in stage.steps_by_type.iter_mut() {
                 info!(
                     "Processing pipeline step {} / {} / {}",
-                    self.name.as_str(),
-                    phase_code.name(),
-                    pipeline_step.name()
+                    self.name.as_str().on_blue(),
+                    phase_code.name().on_blue(),
+                    pipeline_step.name().on_blue()
                 );
 
                 let current_target = T::reborrow(&mut target);
