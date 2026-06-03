@@ -34,7 +34,7 @@ impl RadiusInputPipelineStep for MessageAuthenticatorRadiusInputPipelineStep {
     }
 
     fn phase_code(&self) -> RadiusInputPhaseCode {
-        RadiusInputPhaseCode::RadiusAttribute
+        RadiusInputPhaseCode::RadiusLayer
     }
 
     fn process(
