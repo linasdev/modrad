@@ -29,9 +29,7 @@ impl RadiusOutputPipelineStep for EapMessageRadiusOutputPipelineStep {
         _input_packet_container: &RadiusPacketInputContainer,
     ) -> Result<(), RadiusOutputError> {
         if let Some(eap_packet) = output_packet_container.take_metadata::<EapPacket>() {
-            info!(
-                "EapPacket metadata found in output packet container, checking for EAP-Message attribute"
-            );
+            info!("EapPacket metadata found in output packet container, processing pipeline step");
 
             let packet = output_packet_container.packet_mut();
             let attributes = packet.attributes_mut();

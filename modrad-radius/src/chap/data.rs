@@ -1,9 +1,7 @@
 use crate::chap::ChapPacketError;
 use crate::chap::code::ChapPacketCode;
-use crate::radius::metadata::RadiusPacketMetadata;
-use std::any::Any;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ChapPacketData {
     Challenge { value: Vec<u8>, name: Vec<u8> },
     Response { value: Vec<u8>, name: Vec<u8> },
@@ -84,16 +82,6 @@ impl TryFrom<(ChapPacketCode, &[u8])> for ChapPacketData {
                 message: buffer.to_vec(),
             }),
         }
-    }
-}
-
-impl RadiusPacketMetadata for ChapPacketData {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 

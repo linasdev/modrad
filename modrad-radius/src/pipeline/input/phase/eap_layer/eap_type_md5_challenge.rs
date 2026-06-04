@@ -6,11 +6,19 @@ use crate::eap::data::{EapPacketData, EapPacketTypeData};
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use crate::radius::container::RadiusPacketInputContainer;
+use crate::radius::metadata::RadiusPacketMetadata;
 use log::{debug, info, trace, warn};
 use pretty_hex::PrettyHex;
+use std::any::Any;
 
 #[derive(Default)]
 pub struct EapTypeMD5ChallengeRadiusInputPipelineStep {}
+
+#[derive(Debug, Clone)]
+pub struct EapTypeDataMD5Challenge {
+    pub value: Vec<u8>,
+    pub name: Vec<u8>,
+}
 
 impl EapTypeMD5ChallengeRadiusInputPipelineStep {
     pub fn new() -> Self {
@@ -32,8 +40,6 @@ impl RadiusInputPipelineStep for EapTypeMD5ChallengeRadiusInputPipelineStep {
         input_packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
         if let Some(eap_packet) = input_packet_container.get_metadata::<EapPacket>() {
-            debug!("EapPacket metadata found in input packet container, checking type data");
-
             if let EapPacketData::Response {
                 type_data: EapPacketTypeData::MD5Challenge(buffer),
             } = eap_packet.data()
@@ -44,37 +50,52 @@ impl RadiusInputPipelineStep for EapTypeMD5ChallengeRadiusInputPipelineStep {
                     buffer.hex_dump()
                 );
 
-                let chap_packet_data = match ChapPacketData::try_from((
-                    ChapPacketCode::Response,
-                    &buffer[..],
-                )) {
-                    Ok(chap_packet_data) => chap_packet_data,
-                    Err(error) => {
-                        match error {
-                            ChapPacketError::NotEnoughData => {
-                                warn!(
-                                    "ChapPacketData::Response's value length is shorter than it's value length field, skipping pipeline step processing"
-                                );
-                                return Ok(());
-                            }
-                            _ => {}
-                        }
+                match ChapPacketData::try_from((ChapPacketCode::Response, &buffer[..])) {
+                    Ok(ChapPacketData::Response { value, name }) => {
+                        info!(
+                            "MD5-Challenge type data contains a valid ChapPacketData::Response, adding EapTypeDataMD5Challenge metadata"
+                        );
+                        input_packet_container
+                            .set_metadata(EapTypeDataMD5Challenge { value, name });
 
-                        #[allow(unreachable_code)]
-                        return Err(RadiusInputError::ChapPacket(error));
+                        Ok(())
                     }
-                };
-
-                info!(
-                    "Valid ChapPacketData::Response found in packet, adding ChapPacketData::Response metadata"
-                );
-                input_packet_container.set_metadata(chap_packet_data);
+                    Ok(_) => unreachable!(),
+                    Err(error) => match error {
+                        ChapPacketError::NotEnoughData => {
+                            warn!(
+                                "ChapPacketData::Response's value length is shorter than it's value length field, skipping pipeline step processing"
+                            );
+                            Ok(())
+                        }
+                        _ => {
+                            info!(
+                                "MD5-Challenge type data contains no valid ChapPacketData::Response, skipping pipeline step processing"
+                            );
+                            Ok(())
+                        }
+                    },
+                }
+            } else {
+                debug!("EapPacket is not of type MD5-Challenge, skipping pipeline step processing");
+                Ok(())
             }
-
-            Ok(())
         } else {
+            debug!(
+                "No EapPacket metadata found in packet container, skipping pipeline step processing"
+            );
             Ok(())
         }
+    }
+}
+
+impl RadiusPacketMetadata for EapTypeDataMD5Challenge {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 
@@ -90,7 +111,7 @@ mod tests {
     use std::sync::Arc;
 
     #[test]
-    fn should_add_chap_packet_data_metadata_to_container_from_eap_packet_metadata() {
+    fn should_add_eap_type_data_md5_challenge_to_container_from_eap_packet_metadata() {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -116,18 +137,14 @@ mod tests {
         let mut target = EapTypeMD5ChallengeRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
-        let ChapPacketData::Response { value, name } =
-            container.get_metadata::<ChapPacketData>().unwrap()
-        else {
-            unreachable!()
-        };
+        let result = container.get_metadata::<EapTypeDataMD5Challenge>().unwrap();
 
-        assert_that!(value, eq(&[1, 2, 3]));
-        assert_that!(name, eq(&[4, 5, 6]));
+        assert_that!(result.value, eq(&[1, 2, 3]));
+        assert_that!(result.name, eq(&[4, 5, 6]));
     }
 
     #[test]
-    fn should_not_add_chap_packet_data_metadata_to_container_when_the_eap_packet_metadata_is_not_of_type_md5_challenge()
+    fn should_not_add_eap_type_data_md5_challenge_to_container_when_the_eap_packet_metadata_is_not_of_type_md5_challenge()
      {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -150,12 +167,15 @@ mod tests {
         let mut target = EapTypeMD5ChallengeRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
-        assert_that!(container.has_metadata::<ChapPacketData>(), is_false());
+        assert_that!(
+            container.has_metadata::<EapTypeDataMD5Challenge>(),
+            is_false()
+        );
     }
 
     #[test]
-    fn should_not_add_chap_packet_data_metadata_to_container_when_there_is_no_eap_packet_metadata()
-    {
+    fn should_not_add_eap_type_data_md5_challenge_to_container_when_there_is_no_eap_packet_metadata()
+     {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -171,6 +191,9 @@ mod tests {
         let mut target = EapTypeMD5ChallengeRadiusInputPipelineStep::new();
         target.process(&mut container).unwrap();
 
-        assert_that!(container.has_metadata::<ChapPacketData>(), is_false());
+        assert_that!(
+            container.has_metadata::<EapTypeDataMD5Challenge>(),
+            is_false()
+        );
     }
 }

@@ -10,7 +10,7 @@ use std::any::Any;
 #[derive(Default)]
 pub struct EapTypeIdentityRadiusInputPipelineStep {}
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum EapTypeDataIdentity {
     UserName(String),
 }
@@ -111,7 +111,7 @@ mod tests {
 
         assert_that!(
             result,
-            eq(&EapTypeDataIdentity::UserName("john_doe".to_string()))
+            matches_pattern!(EapTypeDataIdentity::UserName(eq("john_doe")))
         );
     }
 

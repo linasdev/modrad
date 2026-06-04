@@ -1,7 +1,7 @@
+use colored::Colorize;
 use log::info;
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use colored::Colorize;
 
 pub mod handler;
 pub mod input;

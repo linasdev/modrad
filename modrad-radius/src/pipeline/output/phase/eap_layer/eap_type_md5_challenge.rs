@@ -2,6 +2,7 @@ use crate::chap::data::ChapPacketData;
 use crate::eap::EapPacket;
 use crate::eap::data::{EapPacketData, EapPacketTypeData};
 use crate::identifier_pool::EapIdentifierPool;
+use crate::pipeline::input::phase::eap_layer::eap_type_md5_challenge::EapTypeDataMD5Challenge;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
@@ -34,9 +35,11 @@ impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
         output_packet_container: &mut RadiusPacketOutputContainer,
         _input_packet_container: &RadiusPacketInputContainer,
     ) -> Result<(), RadiusOutputError> {
-        if let Some(chap_packet_data) = output_packet_container.take_metadata::<ChapPacketData>() {
+        if let Some(eap_type_data) =
+            output_packet_container.take_metadata::<EapTypeDataMD5Challenge>()
+        {
             info!(
-                "ChapPacketData metadata found in output packet container, checking for EapPacket metadata"
+                "EapTypeDataMD5Challenge metadata found in output packet container, processing pipeline step"
             );
 
             if !output_packet_container.has_metadata::<EapPacket>() {
@@ -52,7 +55,12 @@ impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
                 let eap_packet = EapPacket::new(
                     eap_identifier,
                     EapPacketData::Request {
-                        type_data: EapPacketTypeData::MD5Challenge(Vec::from(chap_packet_data)),
+                        type_data: EapPacketTypeData::MD5Challenge(Vec::from(
+                            ChapPacketData::Challenge {
+                                value: eap_type_data.value,
+                                name: eap_type_data.name,
+                            },
+                        )),
                     },
                 );
 
@@ -73,7 +81,6 @@ impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chap::data::ChapPacketData;
     use crate::eap::code::EapPacketCode;
     use crate::eap::data::EapPacketData;
     use crate::peer::RadiusPeer;
@@ -85,7 +92,7 @@ mod tests {
     use std::time::Duration;
 
     #[test]
-    fn should_add_eap_packet_metadata_to_container_from_chap_packet_data_metadata() {
+    fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -108,7 +115,7 @@ mod tests {
                 remote_address: "127.0.0.1:1234".parse().unwrap(),
             }),
         );
-        output_container.set_metadata(ChapPacketData::Challenge {
+        output_container.set_metadata(EapTypeDataMD5Challenge {
             value: vec![1, 2, 3],
             name: vec![4, 5, 6],
         });
@@ -160,7 +167,7 @@ mod tests {
                 remote_address: "127.0.0.1:1234".parse().unwrap(),
             }),
         );
-        output_container.set_metadata(ChapPacketData::Challenge {
+        output_container.set_metadata(EapTypeDataMD5Challenge {
             value: vec![1, 2, 3],
             name: vec![4, 5, 6],
         });
@@ -193,8 +200,8 @@ mod tests {
     }
 
     #[test]
-    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_chap_packet_data_metadata()
-    {
+    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_type_data_md5_challenge()
+     {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,

@@ -1,10 +1,10 @@
+use crate::eap::{EapPacket, EapPacketError};
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use crate::radius::attribute::RadiusPacketAttributeType;
 use crate::radius::container::RadiusPacketInputContainer;
 use log::{debug, info, trace, warn};
 use pretty_hex::PrettyHex;
-use crate::eap::{EapPacket, EapPacketError};
 
 #[derive(Default)]
 pub struct EapMessageRadiusInputPipelineStep {}
@@ -49,33 +49,27 @@ impl RadiusInputPipelineStep for EapMessageRadiusInputPipelineStep {
             eap_message.hex_dump()
         );
 
-        let eap_packet = match EapPacket::try_from(&eap_message[..]) {
-            Ok(eap_packet) => eap_packet,
-            Err(error) => {
-                match error {
-                    EapPacketError::NotEnoughData => {
-                        warn!(
-                            "EAP-Message attribute(s) total length is shorter than it's length field, skipping pipeline step processing"
-                        );
-                        return Ok(());
-                    }
-                    EapPacketError::InvalidCode => {
-                        warn!(
-                            "EAP-Message attribute(s) contains an invalid EAP code, skipping pipeline step processing"
-                        );
-                        return Ok(());
-                    }
-                }
-
-                #[allow(unreachable_code)]
-                return Err(RadiusInputError::EapPacket(error));
+        match EapPacket::try_from(&eap_message[..]) {
+            Ok(eap_packet) => {
+                info!("Valid EAP-Message attribute(s) found in packet, adding EapPacket metadata");
+                packet_container.set_metadata(eap_packet);
+                Ok(())
             }
-        };
-
-        info!("Valid EAP-Message attribute(s) found in packet, adding EapPacket metadata");
-        packet_container.set_metadata(eap_packet);
-
-        Ok(())
+            Err(error) => match error {
+                EapPacketError::NotEnoughData => {
+                    warn!(
+                        "EAP-Message attribute(s) total length is shorter than it's length field, skipping pipeline step processing"
+                    );
+                    Ok(())
+                }
+                EapPacketError::InvalidCode => {
+                    warn!(
+                        "EAP-Message attribute(s) contains an invalid EAP code, skipping pipeline step processing"
+                    );
+                    Ok(())
+                }
+            },
+        }
     }
 }
 
