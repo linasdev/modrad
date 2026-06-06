@@ -97,7 +97,7 @@ mod tests {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -119,7 +119,7 @@ mod tests {
         let mut packet_output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 attributes,
             ),
@@ -157,7 +157,7 @@ mod tests {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -179,7 +179,7 @@ mod tests {
         let mut packet_output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessChallenge,
-                0,
+                0.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 attributes,
             ),
@@ -217,7 +217,7 @@ mod tests {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -239,7 +239,7 @@ mod tests {
         let mut packet_output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessAccept,
-                0,
+                0.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 attributes,
             ),
@@ -277,7 +277,7 @@ mod tests {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -299,7 +299,7 @@ mod tests {
         let mut packet_output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessReject,
-                0,
+                0.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 attributes,
             ),

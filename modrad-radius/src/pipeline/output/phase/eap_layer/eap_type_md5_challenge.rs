@@ -3,13 +3,13 @@ use crate::eap::EapPacket;
 use crate::eap::data::{EapPacketData, EapPacketTypeData};
 use crate::identifier::pool::EapIdentifierPool;
 use crate::pipeline::input::phase::eap_layer::eap_type_md5_challenge::EapTypeDataMD5Challenge;
-use crate::pipeline::input::phase::radius_layer::eap_message::EapPacketIdentifier;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use async_trait::async_trait;
 use log::info;
 use std::time::Instant;
+use crate::identifier::EapIdentifier;
 
 pub struct EapTypeMD5ChallengeRadiusOutputPipelineStep {
     eap_identifier_pool: EapIdentifierPool,
@@ -51,15 +51,14 @@ impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
                 );
 
                 let eap_identifier = if let Some(eap_packet_identifier) =
-                    output_packet_container.get_metadata::<EapPacketIdentifier>()
+                    output_packet_container.get_metadata::<EapIdentifier>()
                 {
-                    eap_packet_identifier.0
+                    *eap_packet_identifier
                 } else {
                     self.eap_identifier_pool
                         .allocate(Instant::now())
                         .await
                         .ok_or(RadiusOutputError::NoIdentifierAvailable)?
-                        .into()
                 };
 
                 let eap_packet = EapPacket::new(
@@ -106,7 +105,7 @@ mod tests {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -117,7 +116,7 @@ mod tests {
         let mut output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessChallenge,
-                1,
+                1.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 RadiusPacketAttributes::new(),
             ),
@@ -141,7 +140,7 @@ mod tests {
         let result = output_container.get_metadata::<EapPacket>().unwrap();
 
         assert_that!(result.code(), eq(EapPacketCode::Request));
-        assert_that!(result.identifier(), eq(0));
+        assert_that!(result.identifier(), eq(0.into()));
         assert_that!(
             result.data(),
             matches_pattern!(EapPacketData::Request {
@@ -160,7 +159,7 @@ mod tests {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -171,7 +170,7 @@ mod tests {
         let mut output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessChallenge,
-                1,
+                1.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 RadiusPacketAttributes::new(),
             ),
@@ -184,7 +183,7 @@ mod tests {
             name: vec![4, 5, 6],
         });
         output_container.set_metadata(EapPacket::new(
-            220,
+            220.into(),
             EapPacketData::Response {
                 type_data: EapPacketTypeData::Identity(vec![106, 111, 104, 110, 95, 100, 111, 101]),
             },
@@ -201,7 +200,7 @@ mod tests {
         let result = output_container.get_metadata::<EapPacket>().unwrap();
 
         assert_that!(result.code(), eq(EapPacketCode::Response));
-        assert_that!(result.identifier(), eq(220));
+        assert_that!(result.identifier(), eq(220.into()));
         assert_that!(
             result.data(),
             matches_pattern!(EapPacketData::Response {
@@ -218,7 +217,7 @@ mod tests {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -229,7 +228,7 @@ mod tests {
         let mut output_container = RadiusPacketOutputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessChallenge,
-                1,
+                1.into(),
                 [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
                 RadiusPacketAttributes::new(),
             ),

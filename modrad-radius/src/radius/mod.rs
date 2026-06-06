@@ -2,6 +2,7 @@ use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
 use crate::radius::code::RadiusPacketCode;
 use crate::tag_length_value::TagLengthValueError;
 use std::fmt::{Debug, Formatter};
+use crate::identifier::RadiusIdentifier;
 
 pub mod attribute;
 pub mod code;
@@ -19,7 +20,7 @@ pub enum RadiusPacketError {
 #[derive(Clone)]
 pub struct RadiusPacket {
     code: RadiusPacketCode,
-    identifier: u8,
+    identifier: RadiusIdentifier,
     authenticator: [u8; 16],
     attributes: RadiusPacketAttributes,
 }
@@ -27,7 +28,7 @@ pub struct RadiusPacket {
 impl RadiusPacket {
     pub fn new(
         code: RadiusPacketCode,
-        identifier: u8,
+        identifier: RadiusIdentifier,
         authenticator: [u8; 16],
         attributes: RadiusPacketAttributes,
     ) -> Self {
@@ -43,7 +44,7 @@ impl RadiusPacket {
         self.code
     }
 
-    pub fn identifier(&self) -> u8 {
+    pub fn identifier(&self) -> RadiusIdentifier {
         self.identifier
     }
 
@@ -78,7 +79,7 @@ impl From<RadiusPacket> for Vec<u8> {
         let mut buffer = Vec::with_capacity(packet.length());
 
         buffer.push(packet.code.into()); // byte 0
-        buffer.push(packet.identifier); // byte 1
+        buffer.push(packet.identifier.into()); // byte 1
 
         for byte in u16::to_be_bytes(packet.length() as u16) {
             buffer.push(byte); // bytes 2 & 3
@@ -105,7 +106,7 @@ impl TryFrom<&[u8]> for RadiusPacket {
         }
 
         let code = RadiusPacketCode::from(buffer[0]);
-        let identifier = buffer[1];
+        let identifier = buffer[1].into();
 
         let length = u16::from_be_bytes([buffer[2], buffer[3]]) as usize;
 
@@ -160,8 +161,8 @@ mod tests {
     fn should_convert_from_radius_packet_without_attributes_to_byte_buffer() {
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
-            1,
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            1.into(),
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
             RadiusPacketAttributes::new(),
         );
 
@@ -187,8 +188,8 @@ mod tests {
         ));
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
-            1,
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            1.into(),
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
             attributes,
         );
 
@@ -220,8 +221,8 @@ mod tests {
         ));
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
-            1,
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            1.into(),
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
             attributes,
         );
 
@@ -257,7 +258,7 @@ mod tests {
         let result = RadiusPacket::try_from(&buffer[..]).unwrap();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
-        assert_that!(result.identifier(), eq(1));
+        assert_that!(result.identifier(), eq(1.into()));
         assert_that!(result.length(), eq(20));
         assert_that!(
             result.authenticator(),
@@ -282,7 +283,7 @@ mod tests {
         let mut result_attributes = result.attributes().iter();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
-        assert_that!(result.identifier(), eq(1));
+        assert_that!(result.identifier(), eq(1.into()));
         assert_that!(result.length(), eq(22));
         assert_that!(
             result.authenticator(),
@@ -318,7 +319,7 @@ mod tests {
         let mut result_attributes = result.attributes().iter();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
-        assert_that!(result.identifier(), eq(1));
+        assert_that!(result.identifier(), eq(1.into()));
         assert_that!(result.length(), eq(34));
         assert_that!(
             result.authenticator(),
@@ -355,7 +356,7 @@ mod tests {
         let result = RadiusPacket::try_from(&buffer[..]).unwrap();
 
         assert_that!(result.code(), eq(RadiusPacketCode::AccessRequest));
-        assert_that!(result.identifier(), eq(1));
+        assert_that!(result.identifier(), eq(1.into()));
         assert_that!(result.length(), eq(20));
         assert_that!(
             result.authenticator(),

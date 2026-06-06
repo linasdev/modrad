@@ -3,6 +3,7 @@ use crate::eap::data::EapPacketData;
 use crate::radius::metadata::RadiusPacketMetadata;
 use std::any::Any;
 use std::fmt::{Debug, Formatter};
+use crate::identifier::EapIdentifier;
 
 pub mod code;
 pub mod data;
@@ -16,12 +17,12 @@ pub enum EapPacketError {
 }
 
 pub struct EapPacket {
-    identifier: u8,
+    identifier: EapIdentifier,
     data: EapPacketData,
 }
 
 impl EapPacket {
-    pub fn new(identifier: u8, data: EapPacketData) -> Self {
+    pub fn new(identifier: EapIdentifier, data: EapPacketData) -> Self {
         Self { identifier, data }
     }
 
@@ -29,7 +30,7 @@ impl EapPacket {
         self.data.code()
     }
 
-    pub fn identifier(&self) -> u8 {
+    pub fn identifier(&self) -> EapIdentifier {
         self.identifier
     }
 
@@ -47,7 +48,7 @@ impl From<EapPacket> for Vec<u8> {
         let mut buffer = Vec::with_capacity(packet.length());
 
         buffer.push(packet.code().into()); // byte 0
-        buffer.push(packet.identifier); // byte 1
+        buffer.push(packet.identifier.into()); // byte 1
 
         for byte in u16::to_be_bytes(packet.length() as u16) {
             buffer.push(byte); // bytes 2 & 3
@@ -68,7 +69,7 @@ impl TryFrom<&[u8]> for EapPacket {
         }
 
         let code = EapPacketCode::try_from(buffer[0]).map_err(|_| EapPacketError::InvalidCode)?;
-        let identifier = buffer[1];
+        let identifier = buffer[1].into();
         let length = u16::from_be_bytes([buffer[2], buffer[3]]) as usize;
 
         if buffer.len() < length {
@@ -110,7 +111,7 @@ mod tests {
     #[test]
     fn should_convert_from_eap_packet_request_to_byte_buffer() {
         let packet = EapPacket::new(
-            0,
+            0.into(),
             EapPacketData::Request {
                 type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
             },
@@ -132,7 +133,7 @@ mod tests {
     #[test]
     fn should_convert_from_eap_packet_response_to_byte_buffer() {
         let packet = EapPacket::new(
-            0,
+            0.into(),
             EapPacketData::Response {
                 type_data: EapPacketTypeData::Identity(vec![1, 2, 3]),
             },
@@ -153,7 +154,7 @@ mod tests {
 
     #[test]
     fn should_convert_from_eap_packet_success_to_byte_buffer() {
-        let packet = EapPacket::new(0, EapPacketData::Success);
+        let packet = EapPacket::new(0.into(), EapPacketData::Success);
         let result = Vec::from(packet);
 
         let expected_result = vec![
@@ -168,7 +169,7 @@ mod tests {
 
     #[test]
     fn should_convert_from_eap_packet_failure_to_byte_buffer() {
-        let packet = EapPacket::new(0, EapPacketData::Failure);
+        let packet = EapPacket::new(0.into(), EapPacketData::Failure);
         let result = Vec::from(packet);
 
         let expected_result = vec![
@@ -184,7 +185,7 @@ mod tests {
     #[test]
     fn should_convert_from_eap_packet_request_other_to_byte_buffer() {
         let packet = EapPacket::new(
-            0,
+            0.into(),
             EapPacketData::Request {
                 type_data: EapPacketTypeData::Other(0, vec![1, 2, 3]),
             },
@@ -220,7 +221,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacket {
-                identifier: eq(&0),
+                identifier: eq(&0.into()),
                 data: matches_pattern!(EapPacketData::Request {
                     type_data: matches_pattern!(EapPacketTypeData::Identity(&[1, 2, 3])),
                 }),
@@ -244,7 +245,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacket {
-                identifier: eq(&0),
+                identifier: eq(&0.into()),
                 data: matches_pattern!(EapPacketData::Response {
                     type_data: matches_pattern!(EapPacketTypeData::Identity(&[1, 2, 3])),
                 }),
@@ -266,7 +267,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacket {
-                identifier: eq(&0),
+                identifier: eq(&0.into()),
                 data: matches_pattern!(EapPacketData::Success),
             },)
         );
@@ -286,7 +287,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacket {
-                identifier: eq(&0),
+                identifier: eq(&0.into()),
                 data: matches_pattern!(EapPacketData::Failure),
             },)
         );
@@ -308,7 +309,7 @@ mod tests {
         assert_that!(
             result,
             matches_pattern!(EapPacket {
-                identifier: eq(&0),
+                identifier: eq(&0.into()),
                 data: matches_pattern!(EapPacketData::Request {
                     type_data: matches_pattern!(EapPacketTypeData::Other(eq(&0), eq(&[1, 2, 3]))),
                 }),

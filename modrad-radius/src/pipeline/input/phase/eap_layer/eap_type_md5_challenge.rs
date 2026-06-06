@@ -117,7 +117,7 @@ mod tests {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -126,7 +126,7 @@ mod tests {
             }),
         );
         container.set_metadata(EapPacket::new(
-            220,
+            220.into(),
             EapPacketData::Response {
                 type_data: EapPacketTypeData::MD5Challenge(vec![
                     3, // value length
@@ -151,7 +151,7 @@ mod tests {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -160,7 +160,7 @@ mod tests {
             }),
         );
         container.set_metadata(EapPacket::new(
-            220,
+            220.into(),
             EapPacketData::Response {
                 type_data: EapPacketTypeData::GenericTokenCard(vec![1, 2, 3]),
             },
@@ -181,7 +181,7 @@ mod tests {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
