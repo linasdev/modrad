@@ -3,8 +3,8 @@ use crate::eap::EapPacketError;
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 use crate::radius::container::RadiusPacketInputContainer;
-use std::string::FromUtf8Error;
 use async_trait::async_trait;
+use std::string::FromUtf8Error;
 
 pub mod phase;
 

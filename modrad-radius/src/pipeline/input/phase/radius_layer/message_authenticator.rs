@@ -3,11 +3,11 @@ use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::radius::container::RadiusPacketInputContainer;
 use crate::radius::metadata::RadiusPacketMetadata;
+use async_trait::async_trait;
 use hmac::{Hmac, KeyInit, Mac};
 use log::info;
 use md5::Md5;
 use std::any::Any;
-use async_trait::async_trait;
 
 #[derive(Default)]
 pub struct MessageAuthenticatorRadiusInputPipelineStep {

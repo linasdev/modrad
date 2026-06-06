@@ -1,9 +1,9 @@
-use async_trait::async_trait;
 use crate::eap::EapPacket;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use async_trait::async_trait;
 use log::info;
 
 #[derive(Default)]
@@ -179,7 +179,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn should_not_add_eap_message_attribute_to_packet_when_there_is_no_eap_message_metadata() {
+    async fn should_not_add_eap_message_attribute_to_packet_when_there_is_no_eap_message_metadata()
+    {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,

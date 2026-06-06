@@ -1,7 +1,7 @@
-use async_trait::async_trait;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use async_trait::async_trait;
 
 pub mod phase;
 

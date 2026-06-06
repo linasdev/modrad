@@ -1,9 +1,9 @@
-use async_trait::async_trait;
 use crate::pipeline::RadiusPipelineStepAction;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::handler::{RadiusHandlerError, RadiusHandlerPipelineStep};
 use crate::pipeline::input::phase::radius_layer::message_authenticator::MessageAuthenticatorStatus;
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use async_trait::async_trait;
 use log::{info, warn};
 
 pub struct MessageAuthenticatorRadiusHandlerPipelineStep {}

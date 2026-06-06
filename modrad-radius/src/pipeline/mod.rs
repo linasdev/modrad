@@ -1,8 +1,8 @@
+use async_trait::async_trait;
 use colored::Colorize;
 use log::info;
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use async_trait::async_trait;
 
 pub mod handler;
 pub mod input;
@@ -19,7 +19,10 @@ where
 
     fn name(&self) -> String;
     fn phase_code(&self) -> Self::PhaseCode;
-    async fn process(&mut self, target: T::Ref<'_>) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
+    async fn process(
+        &mut self,
+        target: T::Ref<'_>,
+    ) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
 }
 
 pub trait RadiusPipelinePhaseCode: Ord + PartialOrd {

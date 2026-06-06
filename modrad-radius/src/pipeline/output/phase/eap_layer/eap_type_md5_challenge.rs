@@ -1,14 +1,15 @@
 use crate::chap::data::ChapPacketData;
 use crate::eap::EapPacket;
 use crate::eap::data::{EapPacketData, EapPacketTypeData};
-use crate::identifier_pool::EapIdentifierPool;
+use crate::identifier::pool::EapIdentifierPool;
 use crate::pipeline::input::phase::eap_layer::eap_type_md5_challenge::EapTypeDataMD5Challenge;
+use crate::pipeline::input::phase::radius_layer::eap_message::EapPacketIdentifier;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use async_trait::async_trait;
 use log::info;
 use std::time::Instant;
-use async_trait::async_trait;
 
 pub struct EapTypeMD5ChallengeRadiusOutputPipelineStep {
     eap_identifier_pool: EapIdentifierPool,
@@ -49,10 +50,17 @@ impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
                     "No EapPacket metadata found in output packet container, setting EapPacket metadata"
                 );
 
-                let eap_identifier = self
-                    .eap_identifier_pool
-                    .allocate(Instant::now())
-                    .ok_or(RadiusOutputError::NoIdentifierAvailable)?;
+                let eap_identifier = if let Some(eap_packet_identifier) =
+                    output_packet_container.get_metadata::<EapPacketIdentifier>()
+                {
+                    eap_packet_identifier.0
+                } else {
+                    self.eap_identifier_pool
+                        .allocate(Instant::now())
+                        .await
+                        .ok_or(RadiusOutputError::NoIdentifierAvailable)?
+                        .into()
+                };
 
                 let eap_packet = EapPacket::new(
                     eap_identifier,
@@ -147,7 +155,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn should_not_add_eap_packet_metadata_to_container_when_there_already_is_eap_packet_metadata() {
+    async fn should_not_add_eap_packet_metadata_to_container_when_there_already_is_eap_packet_metadata()
+     {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,

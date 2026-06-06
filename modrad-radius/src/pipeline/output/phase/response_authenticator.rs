@@ -1,8 +1,8 @@
-use async_trait::async_trait;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::code::RadiusPacketCode;
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
+use async_trait::async_trait;
 use md5::{Digest, Md5};
 
 #[derive(Default)]

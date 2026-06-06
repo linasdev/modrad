@@ -7,10 +7,10 @@ use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use crate::radius::container::RadiusPacketInputContainer;
 use crate::radius::metadata::RadiusPacketMetadata;
+use async_trait::async_trait;
 use log::{debug, info, trace, warn};
 use pretty_hex::PrettyHex;
 use std::any::Any;
-use async_trait::async_trait;
 
 #[derive(Default)]
 pub struct EapTypeMD5ChallengeRadiusInputPipelineStep {}
