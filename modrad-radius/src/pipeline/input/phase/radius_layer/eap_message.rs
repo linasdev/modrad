@@ -1,9 +1,9 @@
-use async_trait::async_trait;
 use crate::eap::{EapPacket, EapPacketError};
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
 use crate::radius::attribute::RadiusPacketAttributeType;
 use crate::radius::container::RadiusPacketInputContainer;
+use async_trait::async_trait;
 use log::{debug, info, trace, warn};
 use pretty_hex::PrettyHex;
 
@@ -54,6 +54,7 @@ impl RadiusInputPipelineStep for EapMessageRadiusInputPipelineStep {
         match EapPacket::try_from(&eap_message[..]) {
             Ok(eap_packet) => {
                 info!("Valid EAP-Message attribute(s) found in packet, adding EapPacket metadata");
+                packet_container.set_metadata(eap_packet.identifier());
                 packet_container.set_metadata(eap_packet);
                 Ok(())
             }
@@ -80,6 +81,7 @@ mod tests {
     use super::*;
     use crate::eap::code::EapPacketCode;
     use crate::eap::data::{EapPacketData, EapPacketType, EapPacketTypeData};
+    use crate::identifier::EapIdentifier;
     use crate::peer::RadiusPeer;
     use crate::radius::RadiusPacket;
     use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
@@ -98,7 +100,7 @@ mod tests {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 attributes,
             ),
@@ -113,7 +115,7 @@ mod tests {
         let result = container.get_metadata::<EapPacket>().unwrap();
 
         assert_that!(result.code(), eq(EapPacketCode::Response));
-        assert_that!(result.identifier(), eq(220));
+        assert_that!(result.identifier(), eq(220.into()));
         assert_that!(result.length(), eq(13));
 
         let EapPacketData::Response { type_data } = result.data() else {
@@ -127,15 +129,21 @@ mod tests {
             unreachable!()
         };
 
-        assert_that!(buffer, eq(&[106, 111, 104, 110, 95, 100, 111, 101]))
+        assert_that!(buffer, eq(&[106, 111, 104, 110, 95, 100, 111, 101]));
+
+        assert_that!(
+            container.get_metadata::<EapIdentifier>().unwrap(),
+            eq(&220.into())
+        );
     }
 
     #[tokio::test]
-    async fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_message_attribute() {
+    async fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_message_attribute()
+     {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
-                0,
+                0.into(),
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                 RadiusPacketAttributes::new(),
             ),
@@ -148,5 +156,6 @@ mod tests {
         target.process(&mut container).await.unwrap();
 
         assert_that!(container.has_metadata::<EapPacket>(), is_false());
+        assert_that!(container.has_metadata::<EapIdentifier>(), is_false());
     }
 }
