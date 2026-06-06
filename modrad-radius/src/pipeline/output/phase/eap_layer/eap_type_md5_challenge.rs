@@ -1,6 +1,7 @@
 use crate::chap::data::ChapPacketData;
 use crate::eap::EapPacket;
 use crate::eap::data::{EapPacketData, EapPacketTypeData};
+use crate::identifier::EapIdentifier;
 use crate::identifier::pool::EapIdentifierPool;
 use crate::pipeline::input::phase::eap_layer::eap_type_md5_challenge::EapTypeDataMD5Challenge;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
@@ -9,7 +10,6 @@ use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputCon
 use async_trait::async_trait;
 use log::info;
 use std::time::Instant;
-use crate::identifier::EapIdentifier;
 
 pub struct EapTypeMD5ChallengeRadiusOutputPipelineStep {
     eap_identifier_pool: EapIdentifierPool,

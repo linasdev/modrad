@@ -1,8 +1,8 @@
+use crate::identifier::RadiusIdentifier;
 use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributes};
 use crate::radius::code::RadiusPacketCode;
 use crate::tag_length_value::TagLengthValueError;
 use std::fmt::{Debug, Formatter};
-use crate::identifier::RadiusIdentifier;
 
 pub mod attribute;
 pub mod code;
@@ -162,7 +162,7 @@ mod tests {
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
             1.into(),
-                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
             RadiusPacketAttributes::new(),
         );
 
@@ -189,7 +189,7 @@ mod tests {
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
             1.into(),
-                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
             attributes,
         );
 
@@ -222,7 +222,7 @@ mod tests {
         let packet = RadiusPacket::new(
             RadiusPacketCode::AccessRequest,
             1.into(),
-                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
             attributes,
         );
 

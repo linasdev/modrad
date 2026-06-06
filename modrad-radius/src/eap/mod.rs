@@ -1,9 +1,9 @@
 use crate::eap::code::EapPacketCode;
 use crate::eap::data::EapPacketData;
+use crate::identifier::EapIdentifier;
 use crate::radius::metadata::RadiusPacketMetadata;
 use std::any::Any;
 use std::fmt::{Debug, Formatter};
-use crate::identifier::EapIdentifier;
 
 pub mod code;
 pub mod data;
