@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::attribute::{RadiusPacketAttribute, RadiusPacketAttributeType};
@@ -19,6 +20,7 @@ impl MessageAuthenticatorRadiusOutputPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusOutputPipelineStep for MessageAuthenticatorRadiusOutputPipelineStep {
     fn name(&self) -> String {
         "Sign".to_string()
@@ -28,7 +30,7 @@ impl RadiusOutputPipelineStep for MessageAuthenticatorRadiusOutputPipelineStep {
         RadiusOutputPhaseCode::MessageAuthenticator
     }
 
-    fn process(
+    async fn process(
         &mut self,
         output_packet_container: &mut RadiusPacketOutputContainer,
         input_packet_container: &RadiusPacketInputContainer,
@@ -90,8 +92,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_add_message_authenticator_attribute_when_code_is_access_request() {
+    #[tokio::test]
+    async fn should_add_message_authenticator_attribute_when_code_is_access_request() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -129,6 +131,7 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusOutputPipelineStep::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();
@@ -149,8 +152,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_add_message_authenticator_attribute_when_code_is_access_challenge() {
+    #[tokio::test]
+    async fn should_add_message_authenticator_attribute_when_code_is_access_challenge() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -188,6 +191,7 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusOutputPipelineStep::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();
@@ -208,8 +212,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_add_message_authenticator_attribute_when_code_is_access_accept() {
+    #[tokio::test]
+    async fn should_add_message_authenticator_attribute_when_code_is_access_accept() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -247,6 +251,7 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusOutputPipelineStep::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();
@@ -267,8 +272,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_add_message_authenticator_attribute_when_code_is_access_reject() {
+    #[tokio::test]
+    async fn should_add_message_authenticator_attribute_when_code_is_access_reject() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -306,6 +311,7 @@ mod tests {
         let mut target = MessageAuthenticatorRadiusOutputPipelineStep::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();

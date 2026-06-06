@@ -7,6 +7,7 @@ use hmac::{Hmac, KeyInit, Mac};
 use log::info;
 use md5::Md5;
 use std::any::Any;
+use async_trait::async_trait;
 
 #[derive(Default)]
 pub struct MessageAuthenticatorRadiusInputPipelineStep {
@@ -28,6 +29,7 @@ impl MessageAuthenticatorRadiusInputPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusInputPipelineStep for MessageAuthenticatorRadiusInputPipelineStep {
     fn name(&self) -> String {
         "Message-Authenticator".to_string()
@@ -37,7 +39,7 @@ impl RadiusInputPipelineStep for MessageAuthenticatorRadiusInputPipelineStep {
         RadiusInputPhaseCode::RadiusLayer
     }
 
-    fn process(
+    async fn process(
         &mut self,
         packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
@@ -109,8 +111,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_add_message_authenticator_status_not_found_metadata_to_container_when_there_is_no_message_authenticator_attribute()
+    #[tokio::test]
+    async fn should_add_message_authenticator_status_not_found_metadata_to_container_when_there_is_no_message_authenticator_attribute()
      {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -125,7 +127,7 @@ mod tests {
         );
 
         let mut target = MessageAuthenticatorRadiusInputPipelineStep::new("secret");
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         let result = container
             .get_metadata::<MessageAuthenticatorStatus>()
@@ -134,8 +136,8 @@ mod tests {
         assert_that!(result, eq(&MessageAuthenticatorStatus::NotFound),);
     }
 
-    #[test]
-    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_a_valid_message_authenticator_attribute()
+    #[tokio::test]
+    async fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_a_valid_message_authenticator_attribute()
      {
         let mut attributes = RadiusPacketAttributes::new();
         attributes.push(RadiusPacketAttribute::from_tag_and_value(
@@ -158,7 +160,7 @@ mod tests {
         );
 
         let mut target = MessageAuthenticatorRadiusInputPipelineStep::new("secret");
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         let result = container
             .get_metadata::<MessageAuthenticatorStatus>()
@@ -167,8 +169,8 @@ mod tests {
         assert_that!(result, eq(&MessageAuthenticatorStatus::Valid),);
     }
 
-    #[test]
-    fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_an_invalid_message_authenticator_attribute()
+    #[tokio::test]
+    async fn should_add_message_authenticator_status_valid_metadata_to_container_when_there_is_an_invalid_message_authenticator_attribute()
      {
         let mut attributes = RadiusPacketAttributes::new();
         attributes.push(RadiusPacketAttribute::from_tag_and_value(
@@ -189,7 +191,7 @@ mod tests {
         );
 
         let mut target = MessageAuthenticatorRadiusInputPipelineStep::new("secret");
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         let result = container
             .get_metadata::<MessageAuthenticatorStatus>()

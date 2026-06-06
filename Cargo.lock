@@ -294,6 +294,7 @@ dependencies = [
 name = "modrad-radius"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "colored",
  "googletest",
  "hmac",
@@ -302,6 +303,7 @@ dependencies = [
  "modrad-macros",
  "num-traits",
  "pretty-hex",
+ "tokio",
 ]
 
 [[package]]

@@ -2,11 +2,13 @@ use colored::Colorize;
 use log::info;
 use std::any::TypeId;
 use std::collections::BTreeMap;
+use async_trait::async_trait;
 
 pub mod handler;
 pub mod input;
 pub mod output;
 
+#[async_trait]
 pub trait RadiusPipelineStep<T, A>
 where
     T: RadiusPipelineTarget,
@@ -17,7 +19,7 @@ where
 
     fn name(&self) -> String;
     fn phase_code(&self) -> Self::PhaseCode;
-    fn process(&mut self, target: T::Ref<'_>) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
+    async fn process(&mut self, target: T::Ref<'_>) -> Result<RadiusPipelineStepAction<A>, Self::Error>;
 }
 
 pub trait RadiusPipelinePhaseCode: Ord + PartialOrd {
@@ -96,7 +98,7 @@ where
         }
     }
 
-    pub fn process(&mut self, mut target: T::Ref<'_>) -> Result<Option<A>, E> {
+    pub async fn process(&mut self, mut target: T::Ref<'_>) -> Result<Option<A>, E> {
         info!("Processing pipeline {}", self.name.as_str().on_red());
 
         for (phase_code, stage) in self.phases_by_code.iter_mut() {
@@ -115,7 +117,7 @@ where
                 );
 
                 let current_target = T::reborrow(&mut target);
-                match pipeline_step.process(current_target)? {
+                match pipeline_step.process(current_target).await? {
                     RadiusPipelineStepAction::AcceptStep(accept_item) => {
                         info!("Final pipeline action is AcceptStep(A), returning Some(A)");
                         return Ok(Some(accept_item));

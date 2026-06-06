@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
@@ -9,15 +10,17 @@ pub enum RadiusHandlerError {}
 
 pub struct RadiusHandlerPipelineTarget;
 
-pub trait RadiusHandlerPipelineStep {
+#[async_trait]
+pub trait RadiusHandlerPipelineStep: Send {
     fn name(&self) -> String;
     fn phase_code(&self) -> RadiusHandlerPhaseCode;
-    fn process(
+    async fn process(
         &mut self,
         packet_container: &RadiusPacketInputContainer,
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, RadiusHandlerError>;
 }
 
+#[async_trait]
 impl<S> RadiusPipelineStep<RadiusHandlerPipelineTarget, RadiusPacketOutputContainer> for S
 where
     S: RadiusHandlerPipelineStep,
@@ -33,11 +36,11 @@ where
         self.phase_code()
     }
 
-    fn process(
+    async fn process(
         &mut self,
         target: <RadiusHandlerPipelineTarget as RadiusPipelineTarget>::Ref<'_>,
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, Self::Error> {
-        self.process(target)
+        self.process(target).await
     }
 }
 

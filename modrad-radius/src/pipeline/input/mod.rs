@@ -4,6 +4,7 @@ use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::{RadiusPipelineStep, RadiusPipelineStepAction, RadiusPipelineTarget};
 use crate::radius::container::RadiusPacketInputContainer;
 use std::string::FromUtf8Error;
+use async_trait::async_trait;
 
 pub mod phase;
 
@@ -16,15 +17,17 @@ pub enum RadiusInputError {
 
 pub struct RadiusInputPipelineTarget;
 
-pub trait RadiusInputPipelineStep {
+#[async_trait]
+pub trait RadiusInputPipelineStep: Send {
     fn name(&self) -> String;
     fn phase_code(&self) -> RadiusInputPhaseCode;
-    fn process(
+    async fn process(
         &mut self,
         packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError>;
 }
 
+#[async_trait]
 impl<S> RadiusPipelineStep<RadiusInputPipelineTarget, ()> for S
 where
     S: RadiusInputPipelineStep,
@@ -40,11 +43,11 @@ where
         self.phase_code()
     }
 
-    fn process(
+    async fn process(
         &mut self,
         target: <RadiusInputPipelineTarget as RadiusPipelineTarget>::Ref<'_>,
     ) -> Result<RadiusPipelineStepAction<()>, Self::Error> {
-        self.process(target)?;
+        self.process(target).await?;
         Ok(RadiusPipelineStepAction::NextStep)
     }
 }

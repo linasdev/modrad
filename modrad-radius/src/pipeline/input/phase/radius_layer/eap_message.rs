@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::eap::{EapPacket, EapPacketError};
 use crate::pipeline::input::phase::RadiusInputPhaseCode;
 use crate::pipeline::input::{RadiusInputError, RadiusInputPipelineStep};
@@ -15,6 +16,7 @@ impl EapMessageRadiusInputPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusInputPipelineStep for EapMessageRadiusInputPipelineStep {
     fn name(&self) -> String {
         "EAP-Message".to_string()
@@ -24,7 +26,7 @@ impl RadiusInputPipelineStep for EapMessageRadiusInputPipelineStep {
         RadiusInputPhaseCode::RadiusLayer
     }
 
-    fn process(
+    async fn process(
         &mut self,
         packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
@@ -85,8 +87,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_add_eap_packet_metadata_to_container_from_eap_message_attribute() {
+    #[tokio::test]
+    async fn should_add_eap_packet_metadata_to_container_from_eap_message_attribute() {
         let mut attributes = RadiusPacketAttributes::new();
         attributes.push(RadiusPacketAttribute::from_tag_and_value(
             RadiusPacketAttributeType::EAPMessage,
@@ -106,7 +108,7 @@ mod tests {
         );
 
         let mut target = EapMessageRadiusInputPipelineStep::new();
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         let result = container.get_metadata::<EapPacket>().unwrap();
 
@@ -128,8 +130,8 @@ mod tests {
         assert_that!(buffer, eq(&[106, 111, 104, 110, 95, 100, 111, 101]))
     }
 
-    #[test]
-    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_message_attribute() {
+    #[tokio::test]
+    async fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_message_attribute() {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -143,7 +145,7 @@ mod tests {
         );
 
         let mut target = EapMessageRadiusInputPipelineStep::new();
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         assert_that!(container.has_metadata::<EapPacket>(), is_false());
     }

@@ -8,6 +8,7 @@ use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::container::{RadiusPacketInputContainer, RadiusPacketOutputContainer};
 use log::info;
 use std::time::Instant;
+use async_trait::async_trait;
 
 pub struct EapTypeMD5ChallengeRadiusOutputPipelineStep {
     eap_identifier_pool: EapIdentifierPool,
@@ -21,6 +22,7 @@ impl EapTypeMD5ChallengeRadiusOutputPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
     fn name(&self) -> String {
         "MD5-Challenge".to_string()
@@ -30,7 +32,7 @@ impl RadiusOutputPipelineStep for EapTypeMD5ChallengeRadiusOutputPipelineStep {
         RadiusOutputPhaseCode::EapLayer
     }
 
-    fn process(
+    async fn process(
         &mut self,
         output_packet_container: &mut RadiusPacketOutputContainer,
         _input_packet_container: &RadiusPacketInputContainer,
@@ -91,8 +93,8 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    #[test]
-    fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge() {
+    #[tokio::test]
+    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -125,6 +127,7 @@ mod tests {
         ));
         target
             .process(&mut output_container, &input_container)
+            .await
             .unwrap();
 
         let result = output_container.get_metadata::<EapPacket>().unwrap();
@@ -143,8 +146,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_not_add_eap_packet_metadata_to_container_when_there_already_is_eap_packet_metadata() {
+    #[tokio::test]
+    async fn should_not_add_eap_packet_metadata_to_container_when_there_already_is_eap_packet_metadata() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -183,6 +186,7 @@ mod tests {
         ));
         target
             .process(&mut output_container, &input_container)
+            .await
             .unwrap();
 
         let result = output_container.get_metadata::<EapPacket>().unwrap();
@@ -199,8 +203,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_type_data_md5_challenge()
+    #[tokio::test]
+    async fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_type_data_md5_challenge()
      {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -230,6 +234,7 @@ mod tests {
         ));
         target
             .process(&mut output_container, &input_container)
+            .await
             .unwrap();
 
         let result = output_container.get_metadata::<EapPacket>();

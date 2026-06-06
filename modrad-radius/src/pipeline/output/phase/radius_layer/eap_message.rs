@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::eap::EapPacket;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
@@ -14,6 +15,7 @@ impl EapMessageRadiusOutputPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusOutputPipelineStep for EapMessageRadiusOutputPipelineStep {
     fn name(&self) -> String {
         "EAP-Message".to_string()
@@ -23,7 +25,7 @@ impl RadiusOutputPipelineStep for EapMessageRadiusOutputPipelineStep {
         RadiusOutputPhaseCode::RadiusLayer
     }
 
-    fn process(
+    async fn process(
         &mut self,
         output_packet_container: &mut RadiusPacketOutputContainer,
         _input_packet_container: &RadiusPacketInputContainer,
@@ -67,8 +69,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_add_eap_message_attribute_to_packet_from_eap_message_metadata() {
+    #[tokio::test]
+    async fn should_add_eap_message_attribute_to_packet_from_eap_message_metadata() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -101,6 +103,7 @@ mod tests {
         let mut target = EapMessageRadiusOutputPipelineStep::new();
         target
             .process(&mut output_container, &input_container)
+            .await
             .unwrap();
 
         let result = output_container
@@ -117,8 +120,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_not_add_eap_message_attribute_to_packet_when_there_already_is_an_eap_message_attribute()
+    #[tokio::test]
+    async fn should_not_add_eap_message_attribute_to_packet_when_there_already_is_an_eap_message_attribute()
      {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -158,6 +161,7 @@ mod tests {
         let mut target = EapMessageRadiusOutputPipelineStep::new();
         target
             .process(&mut output_container, &input_container)
+            .await
             .unwrap();
 
         let result = output_container
@@ -174,8 +178,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_not_add_eap_message_attribute_to_packet_when_there_is_no_eap_message_metadata() {
+    #[tokio::test]
+    async fn should_not_add_eap_message_attribute_to_packet_when_there_is_no_eap_message_metadata() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -202,6 +206,7 @@ mod tests {
         let mut target = EapMessageRadiusOutputPipelineStep::new();
         target
             .process(&mut output_container, &input_container)
+            .await
             .unwrap();
 
         let result = output_container

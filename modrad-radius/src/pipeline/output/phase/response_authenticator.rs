@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::pipeline::output::phase::RadiusOutputPhaseCode;
 use crate::pipeline::output::{RadiusOutputError, RadiusOutputPipelineStep};
 use crate::radius::code::RadiusPacketCode;
@@ -17,6 +18,7 @@ impl ResponseAuthenticatorRadiusPacketTransformer {
     }
 }
 
+#[async_trait]
 impl RadiusOutputPipelineStep for ResponseAuthenticatorRadiusPacketTransformer {
     fn name(&self) -> String {
         "Sign".to_string()
@@ -26,7 +28,7 @@ impl RadiusOutputPipelineStep for ResponseAuthenticatorRadiusPacketTransformer {
         RadiusOutputPhaseCode::ResponseAuthenticator
     }
 
-    fn process(
+    async fn process(
         &mut self,
         output_packet_container: &mut RadiusPacketOutputContainer,
         input_packet_container: &RadiusPacketInputContainer,
@@ -74,8 +76,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_not_add_response_authenticator_when_code_is_access_request() {
+    #[tokio::test]
+    async fn should_not_add_response_authenticator_when_code_is_access_request() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -113,6 +115,7 @@ mod tests {
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();
@@ -123,8 +126,8 @@ mod tests {
         assert_that!(packet.attributes().iter().count(), eq(2));
     }
 
-    #[test]
-    fn should_add_response_authenticator_when_code_is_access_accept() {
+    #[tokio::test]
+    async fn should_add_response_authenticator_when_code_is_access_accept() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -162,6 +165,7 @@ mod tests {
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();
@@ -174,8 +178,8 @@ mod tests {
         assert_that!(packet.attributes().iter().count(), eq(2));
     }
 
-    #[test]
-    fn should_add_response_authenticator_when_code_is_access_reject() {
+    #[tokio::test]
+    async fn should_add_response_authenticator_when_code_is_access_reject() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -213,6 +217,7 @@ mod tests {
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();
@@ -225,8 +230,8 @@ mod tests {
         assert_that!(packet.attributes().iter().count(), eq(2));
     }
 
-    #[test]
-    fn should_add_response_authenticator_when_code_is_access_challenge() {
+    #[tokio::test]
+    async fn should_add_response_authenticator_when_code_is_access_challenge() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -264,6 +269,7 @@ mod tests {
         let mut target = ResponseAuthenticatorRadiusPacketTransformer::new("secret");
         target
             .process(&mut packet_output_container, &packet_input_container)
+            .await
             .unwrap();
 
         let packet = packet_output_container.packet();

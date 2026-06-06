@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::pipeline::RadiusPipelineStepAction;
 use crate::pipeline::handler::phase::RadiusHandlerPhaseCode;
 use crate::pipeline::handler::{RadiusHandlerError, RadiusHandlerPipelineStep};
@@ -13,6 +14,7 @@ impl MessageAuthenticatorRadiusHandlerPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusHandlerPipelineStep for MessageAuthenticatorRadiusHandlerPipelineStep {
     fn name(&self) -> String {
         "Message-Authenticator".to_string()
@@ -22,7 +24,7 @@ impl RadiusHandlerPipelineStep for MessageAuthenticatorRadiusHandlerPipelineStep
         RadiusHandlerPhaseCode::Validation
     }
 
-    fn process(
+    async fn process(
         &mut self,
         packet_container: &RadiusPacketInputContainer,
     ) -> Result<RadiusPipelineStepAction<RadiusPacketOutputContainer>, RadiusHandlerError> {
@@ -57,8 +59,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_return_next_step_when_message_authenticator_valid_metadata_exists() {
+    #[tokio::test]
+    async fn should_return_next_step_when_message_authenticator_valid_metadata_exists() {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -74,13 +76,13 @@ mod tests {
         container.set_metadata(MessageAuthenticatorStatus::Valid);
 
         let mut target = MessageAuthenticatorRadiusHandlerPipelineStep::new();
-        let result = target.process(&container).unwrap();
+        let result = target.process(&container).await.unwrap();
 
         assert_that!(result, matches_pattern!(RadiusPipelineStepAction::NextStep));
     }
 
-    #[test]
-    fn should_return_discard_packet_when_message_authenticator_invalid_metadata_exists() {
+    #[tokio::test]
+    async fn should_return_discard_packet_when_message_authenticator_invalid_metadata_exists() {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -96,7 +98,7 @@ mod tests {
         container.set_metadata(MessageAuthenticatorStatus::Invalid);
 
         let mut target = MessageAuthenticatorRadiusHandlerPipelineStep::new();
-        let result = target.process(&container).unwrap();
+        let result = target.process(&container).await.unwrap();
 
         assert_that!(
             result,
@@ -104,8 +106,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_return_next_step_when_message_authenticator_not_found_metadata_exists() {
+    #[tokio::test]
+    async fn should_return_next_step_when_message_authenticator_not_found_metadata_exists() {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -121,13 +123,13 @@ mod tests {
         container.set_metadata(MessageAuthenticatorStatus::NotFound);
 
         let mut target = MessageAuthenticatorRadiusHandlerPipelineStep::new();
-        let result = target.process(&container).unwrap();
+        let result = target.process(&container).await.unwrap();
 
         assert_that!(result, matches_pattern!(RadiusPipelineStepAction::NextStep));
     }
 
-    #[test]
-    fn should_return_next_step_when_message_authenticator_metadata_does_not_exist() {
+    #[tokio::test]
+    async fn should_return_next_step_when_message_authenticator_metadata_does_not_exist() {
         let container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -141,7 +143,7 @@ mod tests {
         );
 
         let mut target = MessageAuthenticatorRadiusHandlerPipelineStep::new();
-        let result = target.process(&container).unwrap();
+        let result = target.process(&container).await.unwrap();
 
         assert_that!(result, matches_pattern!(RadiusPipelineStepAction::NextStep));
     }

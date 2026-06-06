@@ -6,6 +6,7 @@ use crate::radius::container::RadiusPacketInputContainer;
 use crate::radius::metadata::RadiusPacketMetadata;
 use log::{debug, info};
 use std::any::Any;
+use async_trait::async_trait;
 
 #[derive(Default)]
 pub struct EapTypeIdentityRadiusInputPipelineStep {}
@@ -21,6 +22,7 @@ impl EapTypeIdentityRadiusInputPipelineStep {
     }
 }
 
+#[async_trait]
 impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
     fn name(&self) -> String {
         "Identity".to_string()
@@ -30,7 +32,7 @@ impl RadiusInputPipelineStep for EapTypeIdentityRadiusInputPipelineStep {
         RadiusInputPhaseCode::EapLayer
     }
 
-    fn process(
+    async fn process(
         &mut self,
         packet_container: &mut RadiusPacketInputContainer,
     ) -> Result<(), RadiusInputError> {
@@ -84,8 +86,8 @@ mod tests {
     use googletest::prelude::*;
     use std::sync::Arc;
 
-    #[test]
-    fn should_add_eap_type_data_identity_metadata_to_container_from_eap_packet_metadata() {
+    #[tokio::test]
+    async fn should_add_eap_type_data_identity_metadata_to_container_from_eap_packet_metadata() {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -105,7 +107,7 @@ mod tests {
         ));
 
         let mut target = EapTypeIdentityRadiusInputPipelineStep::new();
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         let result = container.get_metadata::<EapTypeDataIdentity>().unwrap();
 
@@ -115,8 +117,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn should_not_add_eap_type_data_identity_metadata_to_container_when_there_is_no_eap_packet_metadata()
+    #[tokio::test]
+    async fn should_not_add_eap_type_data_identity_metadata_to_container_when_there_is_no_eap_packet_metadata()
      {
         let mut container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -131,7 +133,7 @@ mod tests {
         );
 
         let mut target = EapTypeIdentityRadiusInputPipelineStep::new();
-        target.process(&mut container).unwrap();
+        target.process(&mut container).await.unwrap();
 
         assert_that!(container.has_metadata::<EapTypeDataIdentity>(), is_false());
     }
