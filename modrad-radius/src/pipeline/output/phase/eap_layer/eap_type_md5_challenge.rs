@@ -101,7 +101,8 @@ mod tests {
     use std::time::Duration;
 
     #[tokio::test]
-    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge_metadata() {
+    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge_metadata()
+    {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -154,7 +155,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge_and_eap_identifier_metadata() {
+    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge_and_eap_identifier_metadata()
+     {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
