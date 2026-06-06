@@ -101,7 +101,7 @@ mod tests {
     use std::time::Duration;
 
     #[tokio::test]
-    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge() {
+    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge_metadata() {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
                 RadiusPacketCode::AccessRequest,
@@ -141,6 +141,60 @@ mod tests {
 
         assert_that!(result.code(), eq(EapPacketCode::Request));
         assert_that!(result.identifier(), eq(0.into()));
+        assert_that!(
+            result.data(),
+            matches_pattern!(EapPacketData::Request {
+                type_data: matches_pattern!(EapPacketTypeData::MD5Challenge(&[
+                    3, // value length
+                    1, 2, 3, // value
+                    4, 5, 6, // name
+                ])),
+            })
+        );
+    }
+
+    #[tokio::test]
+    async fn should_add_eap_packet_metadata_to_container_from_eap_type_data_md5_challenge_and_eap_identifier_metadata() {
+        let input_container = RadiusPacketInputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0.into(),
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                RadiusPacketAttributes::new(),
+            ),
+            Arc::new(RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            }),
+        );
+        let mut output_container = RadiusPacketOutputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessChallenge,
+                1.into(),
+                [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                RadiusPacketAttributes::new(),
+            ),
+            Arc::new(RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            }),
+        );
+        output_container.set_metadata(EapTypeDataMD5Challenge {
+            value: vec![1, 2, 3],
+            name: vec![4, 5, 6],
+        });
+        output_container.set_metadata(EapIdentifier::from(127));
+
+        let mut target = EapTypeMD5ChallengeRadiusOutputPipelineStep::new(EapIdentifierPool::new(
+            Duration::from_mins(1),
+        ));
+        target
+            .process(&mut output_container, &input_container)
+            .await
+            .unwrap();
+
+        let result = output_container.get_metadata::<EapPacket>().unwrap();
+
+        assert_that!(result.code(), eq(EapPacketCode::Request));
+        assert_that!(result.identifier(), eq(127.into()));
         assert_that!(
             result.data(),
             matches_pattern!(EapPacketData::Request {
@@ -212,7 +266,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_type_data_md5_challenge()
+    async fn should_not_add_eap_packet_metadata_to_container_when_there_is_no_eap_type_data_md5_challenge_metadata()
      {
         let input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
