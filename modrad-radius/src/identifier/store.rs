@@ -5,16 +5,18 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tokio::runtime::Handle;
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard, mpsc};
-use tokio::task::JoinHandle;
+use tokio::task::{JoinHandle, block_in_place};
 use tokio::time::MissedTickBehavior;
 use tokio::time::{Duration, Instant, interval_at};
 use tokio::{select, spawn};
 
+#[derive(Clone)]
 pub struct IdentifierStore {
     slots: Arc<Mutex<HashMap<IdentifierStoreIndex, IdentifierStoreSlot>>>,
     shutdown_sender: mpsc::Sender<()>,
-    cleanup_task_handle: JoinHandle<()>,
+    cleanup_task_handle: Option<Arc<JoinHandle<()>>>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -80,18 +82,8 @@ impl IdentifierStore {
         Self {
             slots,
             shutdown_sender,
-            cleanup_task_handle,
+            cleanup_task_handle: Some(Arc::new(cleanup_task_handle)),
         }
-    }
-
-    pub async fn shutdown(self) {
-        self.shutdown_sender
-            .send(())
-            .await
-            .expect("Failed to send shutdown signal to IdentifierStore cleanup task");
-        self.cleanup_task_handle
-            .await
-            .expect("Failed to join IdentifierStore cleanup task");
     }
 
     pub async fn allocate(
@@ -153,6 +145,25 @@ impl IdentifierStore {
     }
 }
 
+impl Drop for IdentifierStore {
+    fn drop(&mut self) {
+        block_in_place(|| {
+            Handle::current().block_on(async move {
+                if let Some(cleanup_task_handle) = self.cleanup_task_handle.take() {
+                    if let Ok(cleanup_task_handle) = Arc::try_unwrap(cleanup_task_handle) {
+                        self.shutdown_sender.send(()).await.expect(
+                            "Failed to send shutdown signal to IdentifierStore cleanup task",
+                        );
+                        cleanup_task_handle
+                            .await
+                            .expect("Failed to join IdentifierStore cleanup task");
+                    }
+                }
+            });
+        });
+    }
+}
+
 impl IdentifierStoreSlot {
     pub fn get<T: IdentifierStoreValue + 'static>(&self) -> Option<&T> {
         self.value
@@ -198,7 +209,7 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn should_allocate_new_slot() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -242,11 +253,9 @@ mod tests {
             );
             assert_that!(result.changed_at, eq(later));
         }
-
-        target.shutdown().await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn should_not_double_allocate_slot() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -292,11 +301,9 @@ mod tests {
                 .await;
             assert_that!(result.is_err(), is_true());
         }
-
-        target.shutdown().await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn should_deallocate_slot() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -347,11 +354,9 @@ mod tests {
                 .await;
             assert_that!(result.is_none(), is_true());
         }
-
-        target.shutdown().await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn should_cleanup_expired_slot() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -405,11 +410,9 @@ mod tests {
                 .await;
             assert_that!(result.is_none(), is_true());
         }
-
-        target.shutdown().await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn should_cleanup_empty_slot() {
         let packet_input_container = RadiusPacketInputContainer::new(
             RadiusPacket::new(
@@ -456,7 +459,65 @@ mod tests {
                 .await;
             assert_that!(result.is_none(), is_true());
         }
+    }
 
-        target.shutdown().await;
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn should_only_drop_data_when_last_arc_is_dropped() {
+        let packet_input_container = RadiusPacketInputContainer::new(
+            RadiusPacket::new(
+                RadiusPacketCode::AccessRequest,
+                0.into(),
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                RadiusPacketAttributes::new(),
+            ),
+            Arc::new(RadiusPeer::Udp {
+                remote_address: "127.0.0.1:1234".parse().unwrap(),
+            }),
+        );
+
+        let now = Instant::now();
+
+        let now_clone = now.clone();
+        let target = IdentifierStore::new(
+            Duration::from_secs(1),
+            Duration::from_millis(1),
+            move || now_clone,
+        );
+        let target_clone = target.clone();
+
+        {
+            let mut result = target
+                .allocate(
+                    Identifier::Radius(RadiusIdentifier(0)),
+                    &packet_input_container,
+                    now,
+                )
+                .await
+                .unwrap();
+
+            result.set(TestIdentifierStoreValue(1), now);
+            assert_that!(
+                result.get::<TestIdentifierStoreValue>(),
+                some(eq(&TestIdentifierStoreValue(1)))
+            );
+            assert_that!(result.changed_at, eq(now));
+        }
+
+        drop(target);
+
+        {
+            let result = target_clone
+                .get(
+                    Identifier::Radius(RadiusIdentifier(0)),
+                    &packet_input_container,
+                )
+                .await
+                .unwrap();
+            assert_that!(
+                result.get::<TestIdentifierStoreValue>(),
+                some(eq(&TestIdentifierStoreValue(1)))
+            );
+            assert_that!(result.changed_at, eq(now));
+        }
     }
 }
