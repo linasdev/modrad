@@ -13,15 +13,6 @@ pub struct RadiusIdentifier(u8);
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct EapIdentifier(u8);
 
-impl Identifier {
-    pub fn as_u32(&self) -> u32 {
-        match self {
-            Identifier::Radius(identifier) => identifier.0 as u32,
-            Identifier::Eap(identifier) => 0x100 + identifier.0 as u32,
-        }
-    }
-}
-
 impl From<u8> for RadiusIdentifier {
     fn from(identifier: u8) -> Self {
         Self(identifier)
